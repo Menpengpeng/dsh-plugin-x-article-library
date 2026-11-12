@@ -1,4 +1,4 @@
-﻿// Host 半部：注册 HTTP 接口与 AI 工具，管理资料库服务的生命周期。
+// Host 半部：注册 HTTP 接口与 AI 工具，管理资料库服务的生命周期。
 
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -377,7 +377,13 @@ export function apply(ctx, config = {}) {
           return { queued: service.enqueueDownload(pending) };
         }
         const settings = service.settings;
-        return { storageRoot: settings.storageRoot, cacheImages: settings.cacheImages, concurrency: settings.downloadConcurrency };
+        return {
+          storageRoot: settings.storageRoot,
+          cacheImages: settings.cacheImages,
+          concurrency: settings.downloadConcurrency,
+          // 宿主目录选择后端：native 表示「浏览…」会弹系统对话框，none/browse 表示退回应用内列表。
+          picker: pickerCapability(),
+        };
       },
     });
     ctx.effect(() => disposeTool, 'x-article-library tool');
