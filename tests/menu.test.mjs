@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { LibraryService } from '../lib/library.js';
-import { buildMarkdown, splitFrontMatter } from '../lib/core.js';
+import { buildMarkdown, splitFrontMatter, extractMeta } from '../lib/core.js';
 
 const base = await fs.mkdtemp(path.join(os.tmpdir(), 'xal-menu-'));
 const dataDir = path.join(base, 'data');
@@ -139,6 +139,46 @@ await service.store.save();
   assert.equal(updated.title.length, 200, '标题应截断到 200');
   assert.ok(!updated.title.startsWith(' '), '标题应去掉首尾空白');
   console.log('标题长度与空白处理 OK');
+}
+
+// ---- 7. Front Matter 字段名兼容：扫描重建不能把元数据读丢 ----
+{
+  // buildMarkdown 写出的是 author_name / source_url / published_at / thread_mode，
+  // extractMeta 必须认得这套名字，否则「扫描存储目录」重建后标题、作者、来源全空。
+  const meta = {
+    postId: '9876543210',
+    sourceUrl: 'https://x.com/someone/status/9876543210',
+    title: '重建出来的标题',
+    authorName: '某作者',
+    authorUsername: 'someone',
+    publishedAt: '2026-02-03T04:05:06.000Z',
+    threadMode: 'full',
+    imageCount: 2,
+  };
+  const written = buildMarkdown({ meta, body: '正文内容', tags: [], collections: [] });
+  const parsed = splitFrontMatter(written);
+  const rebuilt = extractMeta(parsed.frontMatter, meta.postId);
+  assert.equal(rebuilt.title, '重建出来的标题', '标题应能从 Front Matter 读回');
+  assert.equal(rebuilt.authorName, '某作者', '作者名应能读回');
+  assert.equal(rebuilt.authorUsername, 'someone', '用户名应能读回');
+  assert.equal(rebuilt.publishedAt, '2026-02-03T04:05:06.000Z', '发布时间应能读回');
+  assert.equal(rebuilt.sourceUrl, 'https://x.com/i/web/status/9876543210', '来源应能读回');
+  assert.equal(rebuilt.threadMode, 'full', '线程模式应能读回');
+
+  // 老格式（author 带 @、source、published、type）也要认。
+  const legacy = extractMeta({
+    title: '老格式',
+    author: '老王 (@laowang)',
+    source: 'https://x.com/laowang/status/111222333444',
+    published: '2026-03-04',
+    type: 'thread',
+  }, '111222333444');
+  assert.equal(legacy.authorName, '老王');
+  assert.equal(legacy.authorUsername, 'laowang');
+  assert.equal(legacy.publishedAt, '2026-03-04T00:00:00.000Z');
+  assert.equal(legacy.threadMode, 'full');
+  assert.ok(legacy.sourceUrl.includes('111222333444'));
+  console.log('Front Matter 字段名兼容 OK（新格式 + 老格式）');
 }
 
 await fs.rm(base, { recursive: true, force: true });
