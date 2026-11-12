@@ -1,0 +1,318 @@
+﻿// Host 半部：注册 HTTP 接口与 AI 工具，管理资料库服务的生命周期。
+
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { LibraryService } from './lib/library.js';
+import { parseLinks } from './lib/core.js';
+
+const ROUTE = '/api/x-article-library';
+const ASSET_ROUTE = '/api/x-article-library/asset';
+const MAX_BODY_BYTES = 64 * 1024;
+
+export const name = 'x-article-library';
+export const inject = ['webServer', 'connection', 'tools'];
+
+/** 解析 DSH 数据根目录（与宿主默认值保持一致）。 */
+function dshHome() {
+  const configured = String(process.env.DSH_HOME || '').trim();
+  if (configured) {
+    const expanded = configured.replace(/^~(?=$|[\\/])/, os.homedir());
+    return path.resolve(expanded);
+  }
+  return path.join(os.homedir(), '.dsh');
+}
+
+function sendJson(res, status, value) {
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.setHeader('cache-control', 'no-store');
+  res.end(JSON.stringify(value));
+}
+
+async function readJsonBody(req) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) throw Object.assign(new Error('请求内容过大'), { code: 'too-large' });
+    chunks.push(chunk);
+  }
+  const text = Buffer.concat(chunks).toString('utf8').trim();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw Object.assign(new Error('请求体不是合法 JSON'), { code: 'bad-json' });
+  }
+}
+
+/** 业务错误到 HTTP 状态码的映射。 */
+function statusOf(error) {
+  const code = error?.code;
+  if (code === 'not-found' || code === 'ENOENT' || code === 'EISDIR') return 404;
+  if (code === 'too-large') return 413;
+  if (code === 'EACCES' || code === 'EPERM') return 403;
+  if (code === 'ENOSPC') return 507;
+  if (['invalid', 'bad-json', 'duplicate', 'no-root', 'not-ready', 'unsafe-path', 'ENOTDIR', 'ENAMETOOLONG'].includes(code)) return 400;
+  return 500;
+}
+
+/** 应用内目录浏览：只列出目录，跳过隐藏项。 */
+async function browseDirectory(targetPath) {
+  const home = os.homedir();
+  const current = targetPath ? path.resolve(String(targetPath)) : home;
+  let listing;
+  try {
+    listing = await fs.readdir(current, { withFileTypes: true });
+  } catch (error) {
+    throw Object.assign(new Error(error.code === 'ENOENT' ? '目录不存在' : `无法读取目录：${error.message}`), { code: 'invalid' });
+  }
+  const entries = listing
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map((entry) => ({ name: entry.name, path: path.join(current, entry.name) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  const parent = path.dirname(current);
+  return {
+    path: current,
+    name: path.basename(current) || current,
+    parent: parent === current ? null : parent,
+    entries,
+    shortcuts: [
+      { label: '主目录', path: home },
+      { label: '文档', path: path.join(home, 'Documents') },
+      { label: '桌面', path: path.join(home, 'Desktop') },
+      { label: '下载', path: path.join(home, 'Downloads') },
+    ],
+  };
+}
+
+const MIME = {
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.avif': 'image/avif',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+};
+
+export function apply(ctx, config = {}) {
+  const dataDir = path.join(dshHome(), 'storages', 'x-article-library');
+  const defaultStorageRoot = config?.storageRoot
+    ? path.resolve(String(config.storageRoot))
+    : path.join(os.homedir(), 'Documents', 'X Article Library');
+
+  const service = new LibraryService({ dataDir, defaultStorageRoot });
+  const ready = service.init();
+  ready.catch((error) => {
+    console.error(`[x-article-library] 初始化失败：${error?.message || error}`);
+  });
+
+  /** 统一状态快照，附带默认目录等运行时信息。 */
+  const snapshot = () => ({ ...service.snapshot(), defaultStorageRoot, dataDir });
+
+  const actions = {
+    async state() {
+      await ready;
+      return snapshot();
+    },
+    async parse(input) {
+      return parseLinks(String(input.links || ''));
+    },
+    async import(input) {
+      await ready;
+      const result = await service.importLinks({
+        links: String(input.links || ''),
+        threadMode: input.threadMode,
+        duplicatePolicy: input.duplicatePolicy,
+        tags: input.tags,
+        collectionIds: input.collectionIds,
+      });
+      return { ...result, state: snapshot() };
+    },
+    async download(input) {
+      await ready;
+      const queued = service.enqueueDownload(input.postIds);
+      return { queued, state: snapshot() };
+    },
+    async read(input) {
+      await ready;
+      return service.readContent(String(input.postId || ''));
+    },
+    async update(input) {
+      await ready;
+      const item = await service.updateArticle(String(input.postId || ''), input.patch || {});
+      return { item, state: snapshot() };
+    },
+    async remove(input) {
+      await ready;
+      const result = await service.removeArticle(String(input.postId || ''), Boolean(input.deleteFiles));
+      return { ...result, state: snapshot() };
+    },
+    async createCollection(input) {
+      await ready;
+      const collection = await service.createCollection(input);
+      return { collection, state: snapshot() };
+    },
+    async updateCollection(input) {
+      await ready;
+      const collection = await service.updateCollection(String(input.id || ''), input.patch || {});
+      return { collection, state: snapshot() };
+    },
+    async deleteCollection(input) {
+      await ready;
+      const result = await service.deleteCollection(String(input.id || ''));
+      return { ...result, state: snapshot() };
+    },
+    async settings(input) {
+      await ready;
+      const settings = await service.updateSettings(input.patch || {});
+      return { settings, state: snapshot() };
+    },
+    async scan() {
+      await ready;
+      const report = await service.scan();
+      return { report, state: snapshot() };
+    },
+    async browse(input) {
+      return browseDirectory(input.path);
+    },
+  };
+
+  const web = ctx.get('webServer');
+  const connection = ctx.get('connection');
+
+  /** 准入检查：复用 Harness 的 Host/Origin 与登录态防护。 */
+  const rejected = (req, res) => {
+    const rejection = connection?.requestRejection?.(req);
+    if (rejection === undefined || rejection === null || rejection === false) return false;
+    res.statusCode = typeof rejection === 'number' ? rejection : rejection.statusCode || 401;
+    res.end();
+    return true;
+  };
+
+  if (web) {
+    const dispose = web.register({
+      kind: 'exact',
+      path: ROUTE,
+      async handler(req, res) {
+        if (rejected(req, res)) return;
+        try {
+          if (req.method === 'GET') {
+            await ready;
+            return sendJson(res, 200, snapshot());
+          }
+          if (req.method !== 'POST') return sendJson(res, 405, { error: '仅支持 GET 与 POST' });
+          const contentType = String(req.headers['content-type'] || '').toLowerCase();
+          if (!contentType.includes('application/json')) return sendJson(res, 415, { error: '请求需为 application/json' });
+          const body = await readJsonBody(req);
+          const type = String(body.type || '');
+          const action = actions[type];
+          if (!action) return sendJson(res, 400, { error: `未知操作：${type || '(空)'}` });
+          return sendJson(res, 200, await action(body));
+        } catch (error) {
+          return sendJson(res, statusOf(error), { error: String(error?.message || error) });
+        }
+      },
+    });
+    ctx.effect(() => dispose, 'x-article-library route');
+
+    const disposeAsset = web.register({
+      kind: 'exact',
+      path: ASSET_ROUTE,
+      async handler(req, res) {
+        if (rejected(req, res)) return;
+        if (req.method !== 'GET') return sendJson(res, 405, { error: '仅支持 GET' });
+        try {
+          await ready;
+          const url = new URL(req.url || '/', 'http://localhost');
+          const buffer = await service.readAsset(String(url.searchParams.get('postId') || ''), String(url.searchParams.get('name') || ''));
+          res.statusCode = 200;
+          res.setHeader('content-type', MIME[path.extname(String(url.searchParams.get('name') || '')).toLowerCase()] || 'application/octet-stream');
+          res.setHeader('cache-control', 'private, max-age=86400');
+          res.setHeader('x-content-type-options', 'nosniff');
+          res.end(buffer);
+        } catch (error) {
+          return sendJson(res, statusOf(error), { error: String(error?.message || error) });
+        }
+      },
+    });
+    ctx.effect(() => disposeAsset, 'x-article-library asset route');
+  }
+
+  const tools = ctx.get('tools');
+  if (tools) {
+    const disposeTool = tools.register({
+      name: 'x_article_library',
+      description: '管理本地 X 文章库：把公开 X 链接保存为 Markdown、列出文章、读取正文、重试失败下载。不登录、不读取用户书签，只处理公开内容。',
+      parameters: {
+        type: 'object',
+        properties: {
+          action: { type: 'string', enum: ['add', 'list', 'read', 'retry', 'settings'] },
+          links: { type: 'string', description: '要保存的 X 链接，可多个，用换行或空格分隔' },
+          postId: { type: 'string', description: '读取正文时的文章 ID' },
+          collection: { type: 'string', description: '导入时归入的收藏夹名称（需已存在）' },
+          threadMode: { type: 'string', enum: ['full', 'single'], description: 'full=包含作者自线程，single=只取单条' },
+        },
+        required: ['action'],
+        additionalProperties: false,
+      },
+      output: {
+        schema: { type: 'object', additionalProperties: true },
+        render: (_args, value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }],
+      },
+      async execute(input) {
+        await ready;
+        if (input.action === 'add') {
+          const parsed = parseLinks(String(input.links || ''));
+          if (!parsed.postIds.length) {
+            const detail = parsed.invalid.length ? `无法识别：${parsed.invalid.slice(0, 3).join('、')}` : '';
+            throw new Error(`没有识别到有效的 X 链接。${detail}`);
+          }
+          let collectionIds = [];
+          if (input.collection) {
+            const found = service.snapshot().collections.find((item) => item.name === String(input.collection));
+            if (found) collectionIds = [found.id];
+          }
+          const result = await service.importLinks({
+            links: parsed.postIds.join(' '),
+            threadMode: input.threadMode,
+            duplicatePolicy: 'skip',
+            collectionIds,
+          });
+          return { created: result.created, skipped: result.skipped, invalid: result.invalid };
+        }
+        if (input.action === 'list') {
+          const current = service.snapshot();
+          return {
+            total: current.stats.total,
+            collections: current.collections.map((item) => item.name),
+            articles: current.articles.slice(0, 50).map((item) => ({
+              postId: item.postId,
+              title: item.title,
+              author: item.authorName,
+              status: item.downloadStatus,
+              addedAt: item.addedAt,
+            })),
+          };
+        }
+        if (input.action === 'read') {
+          const content = await service.readContent(String(input.postId || ''));
+          return {
+            title: content.title,
+            author: content.authorName,
+            sourceUrl: content.sourceUrl,
+            body: content.body.slice(0, 20000),
+          };
+        }
+        if (input.action === 'retry') {
+          const pending = service.snapshot().articles.filter((item) => item.downloadStatus !== 'ready').map((item) => item.postId);
+          return { queued: service.enqueueDownload(pending) };
+        }
+        const settings = service.settings;
+        return { storageRoot: settings.storageRoot, cacheImages: settings.cacheImages, concurrency: settings.downloadConcurrency };
+      },
+    });
+    ctx.effect(() => disposeTool, 'x-article-library tool');
+  }
+}

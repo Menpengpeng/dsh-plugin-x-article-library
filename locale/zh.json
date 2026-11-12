@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "title": "X 文章库",
+    "description": "粘贴公开 X 链接保存为 Markdown，按收藏夹分类、搜索并离线阅读。"
+  },
+  "panel": {
+    "label": "X 文章"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "title": "X article library",
+    "description": "Paste public X links to save them as Markdown, then sort, search, and read them offline."
+  },
+  "panel": {
+    "label": "X articles"
+  }
+}
