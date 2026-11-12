@@ -6,13 +6,14 @@ import path from 'node:path';
 import { LibraryService } from './lib/library.js';
 import { parseLinks } from './lib/core.js';
 import { revealPath, openDirectory } from './lib/reveal.js';
+import { buildRequest, consumeStream } from './lib/assistant.js';
 
 const ROUTE = '/api/x-article-library';
 const ASSET_ROUTE = '/api/x-article-library/asset';
 const MAX_BODY_BYTES = 64 * 1024;
 
 export const name = 'x-article-library';
-export const inject = ['webServer', 'connection', 'tools'];
+export const inject = ['webServer', 'connection', 'tools', 'llm'];
 
 /** 解析 DSH 数据根目录（与宿主默认值保持一致）。 */
 function dshHome() {
@@ -57,6 +58,8 @@ function statusOf(error) {
   if (code === 'ENOSPC') return 507;
   // 平台不支持定位文件属于「本机能力不足」，用 501 与输入错误区分开。
   if (code === 'unsupported') return 501;
+  // 没有可用模型 / AI 服务缺失也是环境能力问题，不是输入错了。
+  if (code === 'no-model' || code === 'unavailable') return 501;
   if (['invalid', 'bad-json', 'duplicate', 'no-root', 'not-ready', 'unsafe-path', 'ENOTDIR', 'ENAMETOOLONG'].includes(code)) return 400;
   return 500;
 }
@@ -126,6 +129,22 @@ export function apply(ctx, config = {}) {
   /** 统一状态快照，附带默认目录等运行时信息。 */
   const snapshot = () => ({ ...service.snapshot(), defaultStorageRoot, dataDir, picker: pickerCapability() });
 
+  /**
+   * 当前模型路由。
+   * 用宿主的 agentDefaultModel（用户可在界面切换），拿不到就返回 null，
+   * 由调用方给出「没有可用模型」的明确提示，而不是猜一个。
+   */
+  const assistantSelection = () => {
+    try {
+      const defaults = ctx.get('agentDefaultModel');
+      const selection = defaults?.currentSelection?.();
+      if (!selection || !selection.provider || !selection.model) return null;
+      return selection;
+    } catch {
+      return null;
+    }
+  };
+
   const actions = {
     async state() {
       await ready;
@@ -183,6 +202,51 @@ export function apply(ctx, config = {}) {
       await ready;
       const settings = await service.updateSettings(input.patch || {});
       return { settings, state: snapshot() };
+    },
+    /**
+     * 问 AI：不传 question 就是首轮整篇总结，传了就是追问。
+     * 用宿主当前选中的模型（agentDefaultModel），不自己拧 provider/model。
+     */
+    async ask(input) {
+      await ready;
+      const postId = String(input.postId || '');
+      const question = String(input.question || '').trim();
+      const history = Array.isArray(input.history) ? input.history : [];
+
+      const selection = assistantSelection();
+      if (!selection) {
+        throw Object.assign(new Error('当前没有可用的模型，先在界面里选择模型'), { code: 'no-model' });
+      }
+
+      const article = await service.readContent(postId);
+      const request = buildRequest({
+        selection,
+        title: article.title,
+        body: article.body,
+        history,
+        question,
+      });
+
+      const llm = ctx.get('llm');
+      if (!llm || typeof llm.stream !== 'function') {
+        throw Object.assign(new Error('AI 能力不可用'), { code: 'unavailable' });
+      }
+
+      request.sessionId = `xal-${postId}`;
+      const text = await consumeStream(llm.stream(request));
+      if (!text.trim()) {
+        throw Object.assign(new Error('模型没有返回内容，换个问法试试'), { code: 'empty' });
+      }
+      return { answer: text, model: selection.model, provider: selection.provider };
+    },
+    /** 当前模型路由，供界面显示「用哪个模型回答」。 */
+    async ai() {
+      const selection = assistantSelection();
+      return {
+        available: Boolean(selection),
+        provider: selection ? selection.provider : '',
+        model: selection ? selection.model : '',
+      };
     },
     async scan() {
       await ready;

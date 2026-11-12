@@ -259,6 +259,8 @@
       check: 'M5 12.6l4.6 4.4L19 7.4',
       chevronUp: 'M6.4 14.4L12 8.8l5.6 5.6',
       author: 'M12 12.4a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.8 20.4a7.2 7.2 0 0 1 14.4 0',
+      spark: 'M12 3.8l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8zM18.6 15.4l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
+      send: 'M4.6 12l14.8-7.4-4.2 14.8-3.9-6.1zM15.2 19.4l-3.9-6.1',
     };
 
     /** 渲染一个线性图标。size 默认 14。 */
@@ -384,7 +386,111 @@
     }
 
 
-    /** 单行输入对话框：给「重命名文章 / 收藏夹」用。 */
+    /** 问 AI 侧栏：首轮自动总结，之后可连续追问。
+     * 打开时若还没有对话就自动跑一次总结，省得用户再点一下。
+     */
+    function AiPanel({ article, onClose, onError }) {
+      const [messages, setMessages] = useState([]);
+      const [input, setInput] = useState('');
+      const [busy, setBusy] = useState(false);
+      const [info, setInfo] = useState(null);
+      const [localError, setLocalError] = useState('');
+      const bodyRef = useRef(null);
+      const startedRef = useRef(false);
+
+      const scrollToBottom = () => {
+        const node = bodyRef.current;
+        if (node) node.scrollTop = node.scrollHeight;
+      };
+
+      const send = useCallback(async (question) => {
+        setBusy(true);
+        setLocalError('');
+        try {
+          const history = question ? messages : [];
+          const result = await call('ask', {
+            postId: article.postId,
+            question: question || '',
+            history,
+          });
+          setInfo({ model: result.model });
+          setMessages((prev) => [
+            ...prev,
+            ...(question ? [{ role: 'user', content: question }] : []),
+            { role: 'assistant', content: result.answer },
+          ]);
+        } catch (err) {
+          setLocalError(err.message);
+          if (onError) onError(err.message);
+        } finally {
+          setBusy(false);
+          setTimeout(scrollToBottom, 30);
+        }
+      }, [article.postId, messages, onError]);
+
+      // 首次打开自动总结一次。
+      useEffect(() => {
+        if (startedRef.current) return;
+        startedRef.current = true;
+        send('');
+      }, [send]);
+
+      useEffect(scrollToBottom, [messages]);
+
+      async function submit() {
+        const question = input.trim();
+        if (!question || busy) return;
+        setInput('');
+        await send(question);
+      }
+
+      return h(
+        'aside',
+        { className: 'xal-ai' },
+        h(
+          'div',
+          { className: 'xal-ai-head' },
+          h('span', { className: 'xal-ai-title' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
+          info?.model ? h('span', { className: 'xal-ai-model', title: '当前使用的模型' }, info.model) : null,
+          h('button', { className: 'xal-icon-btn', onClick: onClose, title: '关闭' }, h(Glyph, { name: 'close' })),
+        ),
+        h(
+          'div',
+          { className: 'xal-ai-body', ref: bodyRef },
+          messages.length
+            ? messages.map((message, index) => h(
+                'div',
+                { key: index, className: 'xal-ai-msg ' + message.role },
+                message.role === 'assistant'
+                  ? h('div', { className: 'xal-ai-md', dangerouslySetInnerHTML: { __html: renderMarkdown(message.content, 'ai-' + article.postId + '-' + index) } })
+                  : h('div', { className: 'xal-ai-plain' }, message.content),
+              ))
+            : busy
+              ? h('div', { className: 'xal-ai-hint' }, '正在读这篇文章…')
+              : h('div', { className: 'xal-ai-hint' }, '还没有内容'),
+          busy && messages.length ? h('div', { className: 'xal-ai-hint' }, '思考中…') : null,
+          localError ? h('div', { className: 'xal-banner' }, localError) : null,
+        ),
+        h(
+          'div',
+          { className: 'xal-ai-foot' },
+          h('input', {
+            className: 'xal-input',
+            value: input,
+            placeholder: '就这篇文章提问…',
+            disabled: busy,
+            spellCheck: false,
+            onChange: (event) => setInput(event.target.value),
+            onKeyDown: (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submit(); } },
+          }),
+          h('button', { className: 'xal-btn primary', onClick: submit, disabled: busy || !input.trim() },
+            h(Glyph, { name: busy ? 'refresh' : 'send' }),
+            h('span', null, busy ? '…' : '发送')),
+        ),
+      );
+    }
+
+
     function PromptDialog({ title, label, value, placeholder, onClose, onSubmit }) {
       const [text, setText] = useState(value || '');
       const [busy, setBusy] = useState(false);
@@ -437,6 +543,9 @@
 
     const CSS = [
       '.xal-root{display:grid;grid-template-columns:minmax(190px,236px) minmax(260px,360px) minmax(0,1fr);height:100%;min-height:0;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;container-type:inline-size}',
+      // AI 侧栏打开时多一列；窄容器里改窄一点，避免正文被挤没。
+      '.xal-root.ai-open{grid-template-columns:minmax(190px,236px) minmax(260px,340px) minmax(0,1fr) minmax(260px,340px)}',
+      '@container (max-width: 1100px){.xal-root.ai-open{grid-template-columns:minmax(170px,200px) minmax(220px,280px) minmax(0,1fr) minmax(230px,300px)}}',
       '.xal-col{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}',
       '.xal-nav{border-right:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);padding:12px 8px;gap:2px;overflow-y:auto}',
       '.xal-list-col{border-right:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base)}',
@@ -510,8 +619,7 @@
       '.xal-banner.info{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);border-color:var(--dsw-alias-border-l1)}',
       '.xal-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.42);display:grid;place-items:center;padding:20px;box-sizing:border-box}',
       '.xal-dialog{width:min(560px,100%);max-height:min(80vh,720px);overflow-y:auto;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:18px;box-sizing:border-box;box-shadow:0 18px 48px rgba(0,0,0,.32)}',
-      '.xal-ctx-overlay{position:fixed;inset:0;z-index:80;background:transparent}',
-      '.xal-ctx{position:fixed;min-width:200px;max-width:260px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);border-radius:9px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.34);box-sizing:border-box}',
+      '.xal-ctx-overlay{position:fixed;inset:0;z-index:80;background:transparent}',      '.xal-ctx{position:fixed;min-width:200px;max-width:260px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);border-radius:9px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.34);box-sizing:border-box}',
       '.xal-ctx-title{font-size:11px;color:var(--dsw-alias-label-caption);padding:5px 9px 6px;border-bottom:1px solid var(--dsw-alias-border-l1);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.xal-ctx-item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;background:transparent;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:12px;padding:7px 9px;border-radius:6px;cursor:pointer}',
       '.xal-ctx-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
@@ -524,6 +632,25 @@
       '.xal-picker-item.checked{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-border-l2)}',
       '.xal-picker-box{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:3px;flex:none;color:var(--dsw-alias-brand-primary)}',
       '.xal-picker-item.checked .xal-picker-box{border-color:var(--dsw-alias-brand-primary)}',
+      '.xal-ai{display:flex;flex-direction:column;min-width:0;border-left:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);max-height:100%;overflow:hidden}',
+      '.xal-ai-head{display:flex;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);flex:none}',
+      '.xal-ai-title{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);min-width:0}',
+      '.xal-ai-model{margin-left:auto;font-size:10px;color:var(--dsw-alias-label-caption);max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.xal-ai-body{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px}',
+      '.xal-ai-msg{font-size:12px;line-height:1.62;color:var(--dsw-alias-label-primary);max-width:100%;word-break:break-word}',
+      '.xal-ai-msg.user{align-self:flex-end;background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1);border-radius:8px;padding:6px 9px;max-width:88%}',
+      '.xal-ai-plain{white-space:pre-wrap}',
+      '.xal-ai-md>*:first-child{margin-top:0}',
+      '.xal-ai-md>*:last-child{margin-bottom:0}',
+      '.xal-ai-md p{margin:0 0 7px}',
+      '.xal-ai-md ul,.xal-ai-md ol{margin:0 0 7px;padding-left:18px}',
+      '.xal-ai-md li{margin:2px 0}',
+      '.xal-ai-md code{background:var(--dsw-alias-bg-layer-2);padding:1px 4px;border-radius:3px;font-size:11px}',
+      '.xal-ai-hint{font-size:11px;color:var(--dsw-alias-label-caption)}',
+      '.xal-ai-foot{flex:none;display:flex;gap:6px;padding:8px;border-top:1px solid var(--dsw-alias-border-l1)}',
+      '.xal-ai-foot .xal-input{flex:1;min-width:0}',
+      '.xal-icon-btn{display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;padding:3px;border-radius:5px}',
+      '.xal-icon-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
       '.xal-dialog h2{margin:0 0 4px;font-size:16px;font-weight:650}',
       '.xal-dialog .xal-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin:0 0 12px;line-height:1.55}',
       '.xal-field{display:grid;gap:5px;margin-bottom:11px}',
@@ -542,6 +669,8 @@
       '.xal-progress{height:3px;border-radius:2px;background:var(--dsw-alias-bg-layer-2);overflow:hidden;margin-top:6px}',
       '.xal-progress > i{display:block;height:100%;background:var(--dsw-alias-brand-primary);transition:width .3s ease}',
       '@container (max-width:1040px){.xal-root{grid-template-columns:minmax(170px,200px) minmax(230px,300px) minmax(0,1fr)}.xal-reader-body{padding:16px 18px 48px}}',
+      // 窄容器下 AI 侧栏改成浮在右侧，否则正文会被挤到看不见。
+      '@container (max-width:1040px){.xal-root.ai-open{grid-template-columns:minmax(170px,200px) minmax(230px,300px) minmax(0,1fr)}.xal-ai{position:absolute;top:0;right:0;bottom:0;width:min(340px,86%);z-index:20;box-shadow:-8px 0 28px rgba(0,0,0,.28)}}',
       '@container (max-width:820px){.xal-root{grid-template-columns:minmax(0,1fr)}.xal-nav,.xal-list-col{display:none}}',
     ].join('\n');
 
@@ -864,6 +993,7 @@
       const [contextMenu, setContextMenu] = useState(null);
       const [prompt, setPrompt] = useState(null);
       const [picker, setPicker] = useState(null);
+      const [aiOpen, setAiOpen] = useState(false);
       const readerRef = useRef(null);
 
       const load = useCallback(async () => {
@@ -916,6 +1046,8 @@
         setSelectedId(postId);
         setContent(null);
         setContentLoading(true);
+        // 换了文章就收起 AI 侧栏，避免还看着上一篇的总结。
+        setAiOpen(false);
         try {
           setContent(await call('read', { postId }));
           await call('update', { postId, patch: { readState: 'read' } });
@@ -1127,7 +1259,7 @@
 
       return h(
         'div',
-        { className: 'xal-root' },
+        { className: 'xal-root' + (aiOpen && selected && selected.downloadStatus === 'ready' && content ? ' ai-open' : ''), style: { position: 'relative' } },
         h(Styles),
 
         // 左栏：资料库导航
@@ -1279,6 +1411,7 @@
                   h(
                     'div',
                     { style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
+                    h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: '用 AI 总结这篇文章，可继续追问' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
                       h(Glyph, { name: 'star' }),
                       h('span', null, selected.starred ? '已收藏' : '收藏')),
@@ -1299,8 +1432,7 @@
                   h('div', { className: 'xal-md', dangerouslySetInnerHTML: { __html: renderMarkdown(content.body, content.postId) } }),
                 ),
               )
-            : h(
-                'div',
+            : h(                'div',
                 { className: 'xal-empty' },
                 contentLoading
                   ? h('span', null, h('span', { className: 'xal-spin' }), ' 正在读取…')
@@ -1328,6 +1460,16 @@
                       ),
               ),
         ),
+
+        // 问 AI 侧栏：只在打开且文章可读时出现，作为阅读器的右侧补充栏。
+        aiOpen && selected && selected.downloadStatus === 'ready' && content
+          ? h(AiPanel, {
+              key: content.postId,
+              article: { postId: content.postId, title: content.title },
+              onClose: () => setAiOpen(false),
+              onError: setError,
+            })
+          : null,
 
         dialog === 'add' ? h(AddDialog, { state, onClose: () => setDialog(''), onDone: (next) => refresh(next), onError: setError }) : null,
         dialog === 'settings' ? h(SettingsDialog, { state, onClose: () => setDialog(''), onSaved: (next) => refresh(next), onError: setError }) : null,

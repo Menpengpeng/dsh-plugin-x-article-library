@@ -48,7 +48,7 @@ const ctx = {
 };
 
 const plugin = await import('../index.js');
-assert.deepEqual(plugin.inject, ['webServer', 'connection', 'tools'], '插件应声明依赖服务');
+assert.deepEqual(plugin.inject, ['webServer', 'connection', 'tools', 'llm'], '插件应声明依赖服务');
 plugin.apply(ctx, {});
 await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -299,6 +299,22 @@ await assert.rejects(() => tool.execute({ action: 'add', links: 'https://example
 const rendered = tool.output.render({ action: 'list' }, listResult);
 assert.equal(rendered[0].type, 'text', 'render 应返回文本块');
 console.log('AI 工具 OK：list / settings / 无效链接报错 / render');
+
+// 15.5) 问 AI：没有模型时要给明确提示，而不是天知道报什么错
+{
+  // ai 是 HTTP 动作（不进 AI 工具的 action 枚举），这里直接走路由。
+  const jsonPost = (payload) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+  const aiInfo = await httpCall('/api/x-article-library', jsonPost({ type: 'ai' }));
+  assert.equal(aiInfo.status, 200, 'ai 动作应可用');
+  assert.equal(aiInfo.json.available, false, '测试环境没有 agentDefaultModel，应报告不可用');
+  assert.equal(aiInfo.json.model, '', '没有模型时 model 应为空串');
+
+  // 没有模型时问 AI 必须给出可读原因，不能崩。这是环境能力问题，用 501。
+  const askFail = await httpCall('/api/x-article-library', jsonPost({ type: 'ask', postId: '20', question: '' }));
+  assert.equal(askFail.status, 501, '没有可用模型时应返回 501');
+  assert.ok(String(askFail.json.error || '').includes('模型'), '错误信息应说明没有可用模型');
+  console.log('问 AI 降级 OK：无模型时明确报错');
+}
 
 // 16) 释放
 assert.equal(effects.length, 3, '应注册 3 个 effect');

@@ -1,6 +1,6 @@
 {
   "name": "@menpengpeng/dsh-plugin-x-article-library",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": false,
   "type": "module",
   "description": "DSH plugin: save public X (Twitter) posts as offline Markdown with a three-pane library reader.",
@@ -27,7 +27,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node tests/reveal.test.mjs && node tests/menu.test.mjs && node tests/markdown.test.mjs && node tests/client.test.mjs && node tests/host.test.mjs"
+    "test": "node tests/reveal.test.mjs && node tests/menu.test.mjs && node tests/assistant.test.mjs && node tests/markdown.test.mjs && node tests/client.test.mjs && node tests/host.test.mjs"
   },
   "exports": {
     ".": "./index.js",
