@@ -507,6 +507,15 @@
         }
       }
 
+      /** 在系统文件管理器中打开当前填写的目录（未填则打开已保存的目录）。 */
+      async function openFolderHere() {
+        try {
+          await call('openFolder', { path: root || undefined });
+        } catch (error) {
+          onError(error.message);
+        }
+      }
+
       return h(
         'div',
         { className: 'xal-overlay', onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
@@ -524,8 +533,10 @@
               { className: 'xal-row' },
               h('input', { className: 'xal-input xal-grow', value: root, onChange: (event) => setRoot(event.target.value), spellCheck: false }),
               h('button', { className: 'xal-btn', onClick: () => openBrowse(root), disabled: busy }, '浏览…'),
+              h('button', { className: 'xal-btn', onClick: openFolderHere, disabled: busy, title: '在系统资源管理器中打开该目录' }, '📂 打开'),
             ),
             h('div', { className: 'xal-hint' }, '默认：' + state.defaultStorageRoot),
+            h('div', { className: 'xal-hint' }, '可以填任意目录，也可以点「浏览…」在本应用内挑。已经是相对路径的写法会被拒绝。'),
           ),
           browse
             ? h(
@@ -733,6 +744,24 @@
         }
       }
 
+      /** 在系统资源管理器中定位这篇的 Markdown 文件。 */
+      async function revealArticle(item) {
+        try {
+          await call('reveal', { postId: item.postId });
+        } catch (err) {
+          setError(err.message);
+        }
+      }
+
+      /** 打开存储根目录（不选中具体文件）。 */
+      async function openStorageFolder() {
+        try {
+          await call('openFolder', { path: state.settings.storageRoot });
+        } catch (err) {
+          setError(err.message);
+        }
+      }
+
       async function removeCollection(id) {
         try {
           const result = await call('deleteCollection', { id });
@@ -928,6 +957,7 @@
                     'div',
                     { style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected) }, selected.starred ? '★ 已收藏' : '☆ 收藏'),
+                    h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: '在资源管理器中显示该文件' }, '📂 打开所在位置'),
                     h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, '打开原帖'),
                     h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false) }, '从库中移除'),
                     h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, true) }, '删除含文件'),
@@ -966,7 +996,9 @@
                             ? '在左侧选一篇已下载的文章，正文会显示在这里。'
                             : '把公开的 X 帖子或长文链接贴进来，会自动转成可离线阅读的 Markdown，并按收藏夹和博主归类。'),
                         h('div', { style: { marginTop: 14 } },
-                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, '添加链接')),
+                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, '添加链接'),
+                          h('button', { className: 'xal-btn', style: { marginLeft: 8 }, onClick: openStorageFolder, title: '在资源管理器中打开存储目录' }, '📂 打开存储目录'),
+                        ),
                       ),
               ),
         ),

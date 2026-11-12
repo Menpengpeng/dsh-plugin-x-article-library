@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { LibraryService } from './lib/library.js';
 import { parseLinks } from './lib/core.js';
+import { revealPath, openDirectory } from './lib/reveal.js';
 
 const ROUTE = '/api/x-article-library';
 const ASSET_ROUTE = '/api/x-article-library/asset';
@@ -54,6 +55,8 @@ function statusOf(error) {
   if (code === 'too-large') return 413;
   if (code === 'EACCES' || code === 'EPERM') return 403;
   if (code === 'ENOSPC') return 507;
+  // 平台不支持定位文件属于「本机能力不足」，用 501 与输入错误区分开。
+  if (code === 'unsupported') return 501;
   if (['invalid', 'bad-json', 'duplicate', 'no-root', 'not-ready', 'unsafe-path', 'ENOTDIR', 'ENAMETOOLONG'].includes(code)) return 400;
   return 500;
 }
@@ -176,6 +179,27 @@ export function apply(ctx, config = {}) {
     },
     async browse(input) {
       return browseDirectory(input.path);
+    },
+    /** 在系统文件管理器中定位某篇文章的正文文件。 */
+    async reveal(input) {
+      await ready;
+      const located = await service.locateArticle(String(input.postId || ''));
+      const result = await revealPath(located.file);
+      return { ...result, postId: located.postId, file: located.file, dir: located.dir };
+    },
+    /** 打开一个目录本身（设置页里「打开存储文件夹」用）。 */
+    async openFolder(input) {
+      await ready;
+      const raw = String(input.path || '').trim();
+      const target = raw ? path.resolve(raw) : service.ensureRoot();
+      let stats;
+      try {
+        stats = await fs.stat(target);
+      } catch {
+        throw Object.assign(new Error('目录不存在'), { code: 'not-found' });
+      }
+      if (!stats.isDirectory()) throw Object.assign(new Error('不是目录'), { code: 'invalid' });
+      return await openDirectory(target);
     },
   };
 

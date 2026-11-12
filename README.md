@@ -11,6 +11,8 @@ DSH 桌面版插件。把公开的 X（Twitter）帖子与长文链接保存为�
 - **三栏阅读器**：左栏资料库导航（全部 / 未读 / 收藏 / 需要处理 / 收藏夹 / 博主），中栏文章列表（搜索、状态、进度），右栏 Markdown 阅读区。
 - **分类不搬文件**：收藏夹与标签只存在索引里，改名或重新分类不会移动磁盘文件。
 - **图片本地化**：正文图片下载到 `assets/` 并改写为相对路径，断网也能看到图。
+- **存储位置可配**：在设置里指定任意目录，也能在系统资源管理器中直接打开。
+- **一键定位文件**：阅读器里点「打开所在位置」，直接在资源管理器里选中该篇的 `article.md`。
 - **AI 工具**：注册 `x_article_library` 工具，可在会话中让 AI 添加链接、列出文章、读取正文。
 
 ## 安装
@@ -46,10 +48,20 @@ pnpm add file:<本仓库绝对路径>
 
 ### 设置
 
-- **存储位置**：默认 `~/Documents/X Article Library`，可在应用内浏览目录后切换；切换只影响后续下载，已有文件不动。
+- **存储位置**：默认 `~/Documents/X Article Library`，可在应用内浏览目录后切换，也可用「📂 打开」在系统资源管理器中直接打开。切换**只影响之后下载的文章**，已有文件不会移动——每篇文章会记住自己下载时的根目录，所以改完设置旧文章照样能读、能删、能定位。
 - **同时下载数**：1–4，默认 2。
 - **图片**：下载到本地或保留远程链接。
 - **扫描存储目录**：把手工放进 `articles/` 的目录重新纳入索引。
+
+### 定位文件
+
+阅读器右上方有「📂 打开所在位置」，点击会在系统文件管理器里**选中**该篇的 `article.md`：
+
+- Windows：`explorer.exe /select,`（Explorer 成功交接时退出码是 1，插件按成功处理）
+- macOS：`open -R`
+- Linux：打开父目录（各文件管理器对「选中文件」没有统一协议）
+
+存储位置输入框旁边的「📂 打开」用于打开当前填写的目录；文章列表为空时，主页还有「📂 打开存储目录」直接打开根目录。
 
 ## 存储结构
 
@@ -101,7 +113,7 @@ X 与图床（`pbs.twimg.com`）在本机通常需要代理。插件内置零依
 ## HTTP 接口
 
 - `GET /api/x-article-library` — 当前完整状态快照。
-- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse`。
+- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
 - `GET /api/x-article-library/asset?postId=&name=` — 读取本地图片。
 
 所有接口都经过 Harness 的 Host/Origin 认证检查，返回 `Cache-Control: no-store`；POST 必须是 `application/json`，请求体上限 64 KiB。
@@ -130,6 +142,7 @@ x-article-library/
   lib/http.js           # 零依赖 HTTP 客户端（支持 CONNECT 代理、解压、重定向）
   lib/core.js           # 链接解析、内容抓取、Front Matter、图片与文件写入
   lib/library.js        # 索引存储、下载队列、文章与收藏夹服务
+  lib/reveal.js         # 在系统文件管理器中定位文件 / 打开目录（跨平台）
   locale/zh.json        # 中文文案
   locale/en.json        # 英文文案
   icon.svg              # 侧边栏图标
