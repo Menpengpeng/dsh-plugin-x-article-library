@@ -32,6 +32,16 @@ function assertAllBlocks(messages, label) {
       assert.equal(block.type, 'text', `${label}：block 类型应为 text`);
       assert.equal(typeof block.text, 'string', `${label}：block.text 应为字符串`);
     }
+    // 宿主 forAdapter 会对 assistant 消息读 message.source.replayState，
+    // 没有 source 就会报 "Cannot read properties of undefined (reading 'replayState')"。
+    if (message.role === 'assistant') {
+      assert.ok(message.source, `${label}：assistant 消息必须有 source`);
+      assert.equal(message.source.kind, 'model', `${label}：source.kind 应为 model`);
+      assert.equal(typeof message.source.provider, 'string', `${label}：source.provider 应为字符串`);
+      assert.equal(typeof message.source.model, 'string', `${label}：source.model 应为字符串`);
+      // 模拟宿主的真实访问，这一步不抛错才算过。
+      assert.equal(message.source.replayState, undefined, `${label}：新建消息不应带 replayState`);
+    }
   }
 }
 

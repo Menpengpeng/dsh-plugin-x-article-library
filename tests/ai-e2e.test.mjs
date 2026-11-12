@@ -199,6 +199,16 @@ assert.equal(record.title, '测试文章标题', 'scan 应从 Front Matter 读�
       assert.equal(block.type, 'text', 'block 类型应为 text');
       assert.equal(typeof block.text, 'string', 'block.text 应为字符串');
     }
+    // 再一道回归：assistant 消息必须带 source。
+    // 宿主 llm 服务的 forAdapter() 会读 message.source.replayState，
+    // 缺 source 就会炸 "Cannot read properties of undefined (reading 'replayState')"。
+    if (message.role === 'assistant') {
+      assert.ok(message.source, 'assistant 消息必须有 source，否则宿主读 source.replayState 会崩');
+      assert.equal(message.source.kind, 'model');
+      assert.equal(message.source.provider, 'test-provider');
+      assert.equal(message.source.model, 'test-model');
+      assert.equal(message.source.replayState, undefined, '新建消息不应带 replayState');
+    }
   }
 
   const flat = sent.messages.flatMap((m) => m.content.map((b) => b.text)).join('\n');
