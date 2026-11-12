@@ -111,8 +111,20 @@ export function apply(ctx, config = {}) {
     console.error(`[x-article-library] 初始化失败：${error?.message || error}`);
   });
 
+  /**
+   * 探测宿主的目录选择后端。
+   * 桌面版（win32/macOS + 回环监听 + 非 SSH）会挂 native 后端，能弹系统对话框；
+   * 其他情况是 browse 或干脆没有，前端据此决定「浏览…」是弹系统框还是退回内置列表。
+   */
+  const pickerCapability = () => {
+    const picker = ctx.get('directoryPicker');
+    if (typeof picker?.capability !== 'function') return { kind: 'none' };
+    const capability = picker.capability();
+    return { kind: capability?.kind || 'unknown', canPick: typeof capability?.pick === 'function' };
+  };
+
   /** 统一状态快照，附带默认目录等运行时信息。 */
-  const snapshot = () => ({ ...service.snapshot(), defaultStorageRoot, dataDir });
+  const snapshot = () => ({ ...service.snapshot(), defaultStorageRoot, dataDir, picker: pickerCapability() });
 
   const actions = {
     async state() {
@@ -200,6 +212,37 @@ export function apply(ctx, config = {}) {
       }
       if (!stats.isDirectory()) throw Object.assign(new Error('不是目录'), { code: 'invalid' });
       return await openDirectory(target);
+    },
+    /**
+     * 弹出系统目录选择框。
+     *
+     * 优先用宿主挂载的 ctx.directoryPicker：只有它的 native 后端会把对话框开在
+     * 宿主自己的桌面上。插件自己 spawn 一个子进程去弹框在桌面版里拿不到交互桌面，
+     * PowerShell 的 FolderBrowserDialog 会被直接拒绝。
+     * 没有 native 后端时返回 kind='unsupported'，由前端退回应用内目录浏览。
+     */
+    async pickFolder(input) {
+      await ready;
+      const picker = ctx.get('directoryPicker');
+      if (typeof picker?.capability !== 'function') {
+        return { kind: 'unsupported', reason: '宿主未挂载目录选择服务' };
+      }
+      const capability = picker.capability();
+      if (capability?.kind !== 'native' || typeof capability.pick !== 'function') {
+        return { kind: 'unsupported', reason: `宿主目录选择后端为 ${capability?.kind || '未知'}` };
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+      try {
+        const picked = await capability.pick(controller.signal);
+        // pick 返回 null 表示用户取消，不是错误。
+        return picked ? { kind: 'picked', path: String(picked) } : { kind: 'cancelled' };
+      } catch (error) {
+        if (error?.name === 'AbortError') throw Object.assign(new Error('选择目录超时'), { code: 'timeout' });
+        throw Object.assign(new Error(`打开目录选择框失败：${error?.message || error}`), { code: 'invalid' });
+      } finally {
+        clearTimeout(timer);
+      }
     },
   };
 

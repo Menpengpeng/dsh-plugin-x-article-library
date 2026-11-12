@@ -27,7 +27,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node tests/reveal.test.mjs && node tests/markdown.test.mjs && node tests/client.test.mjs"
+    "test": "node tests/reveal.test.mjs && node tests/markdown.test.mjs && node tests/client.test.mjs && node tests/host.test.mjs"
   },
   "exports": {
     ".": "./index.js",

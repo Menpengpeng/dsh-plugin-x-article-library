@@ -241,6 +241,47 @@
       );
     }
 
+    // 线性图标集：统一 24 视框、currentColor 描边，避免各处 emoji 字体不一致。
+    const ICONS = {
+      all: 'M4 5.5h16M4 12h16M4 18.5h10',
+      unread: 'M4 6.2h16v11.6H4zM4 7l8 6 8-6',
+      star: 'M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.6 9.7l5.8-.8z',
+      warn: 'M12 4.2l8.2 14.2H3.8zM12 9.6v4.2M12 16.4v.1',
+      folder: 'M3.6 7.2h5.2l1.6 2h9.9v9.2H3.6zM3.6 7.2V5.6h5.2l1.6 1.6',
+      folderOpen: 'M3.6 7.2h5.2l1.6 2h9.9v1.6M3.9 18.6l2.1-7.8h15l-2.1 7.8z',
+      plus: 'M12 5v14M5 12h14',
+      refresh: 'M20 12a8 8 0 1 1-2.6-5.9M20 4v4.4h-4.4',
+      external: 'M14 4.6h5.4V10M19.4 4.6l-8 8M18 14.2v4.8H9.6V5.6h4.6',
+      settings: 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM19.4 12a7.4 7.4 0 0 0-.1-1.2l2-1.5-1.9-3.3-2.4.8a7.4 7.4 0 0 0-2-1.2l-.4-2.5h-3.8l-.4 2.5a7.4 7.4 0 0 0-2 1.2l-2.4-.8-1.9 3.3 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 1.9 3.3 2.4-.8a7.4 7.4 0 0 0 2 1.2l.4 2.5h3.8l.4-2.5a7.4 7.4 0 0 0 2-1.2l2.4.8 1.9-3.3-2-1.5c.06-.4.1-.8.1-1.2z',
+      scan: 'M4.6 8.4V4.6h3.8M19.4 8.4V4.6h-3.8M4.6 15.6v3.8h3.8M19.4 15.6v3.8h-3.8M4.6 12h14.8',
+      trash: 'M5.4 7.4h13.2M9.2 7.4V5.2h5.6v2.2M6.8 7.4l.9 12h8.6l.9-12M10.4 10.8v5.6M13.6 10.8v5.6',
+      close: 'M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6',
+      check: 'M5 12.6l4.6 4.4L19 7.4',
+      chevronUp: 'M6.4 14.4L12 8.8l5.6 5.6',
+      author: 'M12 12.4a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.8 20.4a7.2 7.2 0 0 1 14.4 0',
+    };
+
+    /** 渲染一个线性图标。size 默认 14。 */
+    function Glyph({ name, size }) {
+      const d = ICONS[name] || ICONS.all;
+      return h(
+        'svg',
+        {
+          width: size || 14,
+          height: size || 14,
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: 1.7,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          'aria-hidden': 'true',
+          style: { flex: 'none' },
+        },
+        h('path', { d }),
+      );
+    }
+
     const CSS = [
       '.xal-root{display:grid;grid-template-columns:minmax(190px,236px) minmax(260px,360px) minmax(0,1fr);height:100%;min-height:0;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;container-type:inline-size}',
       '.xal-col{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}',
@@ -265,7 +306,7 @@
       'input.xal-input,select.xal-input{width:100%;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit}',
       'input.xal-input:focus,select.xal-input:focus,textarea.xal-input:focus{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-1px}',
       'textarea.xal-input{width:100%;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-radius:6px;padding:8px;font-size:12px;font-family:inherit;resize:vertical;min-height:88px;line-height:1.55}',
-      '.xal-btn{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;display:inline-block}',
+      '.xal-btn{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px;line-height:1.2}',
       '.xal-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}',
       '.xal-btn:disabled{opacity:.55;cursor:not-allowed}',
       '.xal-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:transparent}',
@@ -327,7 +368,7 @@
       '.xal-browse{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;overflow:hidden;background:var(--dsw-alias-bg-layer-1)}',
       '.xal-browse-path{display:flex;align-items:center;gap:6px;padding:7px 9px;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:11.5px;color:var(--dsw-alias-label-secondary);word-break:break-all}',
       '.xal-browse-list{max-height:180px;overflow-y:auto;padding:4px}',
-      '.xal-browse-item{display:block;width:100%;text-align:left;border:0;background:transparent;color:inherit;font-family:inherit;font-size:12px;padding:5px 8px;border-radius:5px;cursor:pointer}',
+      '.xal-browse-item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;background:transparent;color:inherit;font-family:inherit;font-size:12px;padding:5px 8px;border-radius:5px;cursor:pointer}',
       '.xal-browse-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
       '.xal-spin{display:inline-block;width:11px;height:11px;border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-brand-primary);border-radius:50%;animation:xal-rotate .8s linear infinite;vertical-align:-1px}',
       '@keyframes xal-rotate{to{transform:rotate(360deg)}}',
@@ -453,7 +494,7 @@
           h(
             'div',
             { className: 'xal-dialog-actions' },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, report ? '关闭' : '取消'),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, report ? '关闭' : '取消')),
             h(
               'button',
               { className: 'xal-btn primary', onClick: submit, disabled: busy || !detected.length },
@@ -516,6 +557,29 @@
         }
       }
 
+      /**
+       * 浏览目录：宿主有 native 后端就弹系统文件夹选择框，
+       * 否则退回应用内目录列表。两种都叫「浏览」，所以不提示错误。
+       */
+      async function pickNativeFolder() {
+        if (busy) return;
+        setBusy(true);
+        try {
+          const result = await call('pickFolder', {});
+          if (result.kind === 'picked') {
+            setRoot(result.path);
+            setBrowse(null);
+          } else if (result.kind === 'unsupported') {
+            openBrowse(root);
+          }
+          // kind === 'cancelled'：用户自己关掉的，什么都不做
+        } catch (error) {
+          onError(error.message);
+        } finally {
+          setBusy(false);
+        }
+      }
+
       return h(
         'div',
         { className: 'xal-overlay', onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
@@ -532,11 +596,11 @@
               'div',
               { className: 'xal-row' },
               h('input', { className: 'xal-input xal-grow', value: root, onChange: (event) => setRoot(event.target.value), spellCheck: false }),
-              h('button', { className: 'xal-btn', onClick: () => openBrowse(root), disabled: busy }, '浏览…'),
-              h('button', { className: 'xal-btn', onClick: openFolderHere, disabled: busy, title: '在系统资源管理器中打开该目录' }, '📂 打开'),
+              h('button', { className: 'xal-btn', onClick: pickNativeFolder, disabled: busy, title: '打开系统文件夹选择框' }, h(Glyph, { name: 'folder' }), h('span', null, busy ? '选择中…' : '浏览…')),
+              h('button', { className: 'xal-btn', onClick: openFolderHere, disabled: busy, title: '在系统资源管理器中打开该目录' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开')),
             ),
             h('div', { className: 'xal-hint' }, '默认：' + state.defaultStorageRoot),
-            h('div', { className: 'xal-hint' }, '可以填任意目录，也可以点「浏览…」在本应用内挑。已经是相对路径的写法会被拒绝。'),
+            h('div', { className: 'xal-hint' }, '点「浏览…」会弹出系统文件夹选择框；若当前环境没有桌面显示，会自动退回应用内目录列表。已经是相对路径的写法会被拒绝。'),
           ),
           browse
             ? h(
@@ -545,22 +609,22 @@
                 h(
                   'div',
                   { className: 'xal-browse-path' },
-                  h('button', { className: 'xal-btn ghost', onClick: () => setBrowse(null) }, '收起'),
+                  h('button', { className: 'xal-btn ghost', onClick: () => setBrowse(null) }, h(Glyph, { name: 'chevronUp' }), h('span', null, '收起')),
                   h('span', null, browse.path),
                 ),
                 h(
                   'div',
                   { className: 'xal-browse-list' },
                   browse.parent
-                    ? h('button', { className: 'xal-browse-item', onClick: () => openBrowse(browse.parent) }, '.. 上级目录')
+                    ? h('button', { className: 'xal-browse-item', onClick: () => openBrowse(browse.parent) }, h(Glyph, { name: 'chevronUp' }), h('span', null, '上级目录'))
                     : null,
-                  ...browse.entries.map((entry) => h('button', { key: entry.path, className: 'xal-browse-item', onClick: () => openBrowse(entry.path) }, '📁 ' + entry.name)),
+                  ...browse.entries.map((entry) => h('button', { key: entry.path, className: 'xal-browse-item', onClick: () => openBrowse(entry.path) }, h(Glyph, { name: 'folder' }), h('span', null, entry.name))),
                   browse.entries.length ? null : h('div', { className: 'xal-hint', style: { padding: '6px 9px' } }, '这个目录下没有子目录'),
                 ),
                 h(
                   'div',
                   { className: 'xal-browse-path', style: { borderTop: '1px solid var(--dsw-alias-border-l1)', borderBottom: 0, flexWrap: 'wrap' } },
-                  h('button', { className: 'xal-btn primary', onClick: () => { setRoot(browse.path); setBrowse(null); } }, '使用这个目录'),
+                  h('button', { className: 'xal-btn primary', onClick: () => { setRoot(browse.path); setBrowse(null); } }, h(Glyph, { name: 'check' }), h('span', null, '使用这个目录')),
                   ...browse.shortcuts.map((item) => h('button', { key: item.path, className: 'xal-btn ghost', onClick: () => openBrowse(item.path) }, item.label)),
                 ),
               )
@@ -600,7 +664,7 @@
             h(
               'div',
               { className: 'xal-row' },
-              h('button', { className: 'xal-btn', onClick: runScan, disabled: busy }, busy ? '扫描中…' : '扫描存储目录'),
+              h('button', { className: 'xal-btn', onClick: runScan, disabled: busy }, h(Glyph, { name: 'scan' }), h('span', null, busy ? '扫描中…' : '扫描存储目录')),
               h('span', { className: 'xal-hint', style: { margin: 0 } }, '用于找回被手工放进目录的文章'),
             ),
             scanReport
@@ -610,8 +674,8 @@
           h(
             'div',
             { className: 'xal-dialog-actions' },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, '取消'),
-            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, busy ? '保存中…' : '保存设置'),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
+            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存设置')),
           ),
         ),
       );
@@ -798,10 +862,10 @@
               : view.kind === 'collection' ? ((collections.find((item) => item.id === view.value) || {}).name || '收藏夹')
                 : (view.value || '作者');
 
-      const navItem = (key, label, count, onClick, active, extra) => h(
+      const navItem = (key, label, count, onClick, active, extra, iconName) => h(
         'button',
         { key, className: 'xal-nav-item' + (active ? ' active' : ''), onClick },
-        extra || null,
+        extra || (iconName ? h(Glyph, { name: iconName }) : null),
         h('span', { className: 'xal-nav-label' }, label),
         count !== undefined ? h('span', { className: 'xal-count' }, String(count)) : null,
       );
@@ -816,10 +880,10 @@
           'nav',
           { className: 'xal-col xal-nav' },
           h('div', { className: 'xal-nav-title' }, '资料库'),
-          navItem('all', '全部文章', stats.total, () => setView({ kind: 'all', value: '' }), view.kind === 'all'),
-          navItem('unread', '未读', stats.unread, () => setView({ kind: 'unread', value: '' }), view.kind === 'unread'),
-          navItem('starred', '收藏', stats.starred, () => setView({ kind: 'starred', value: '' }), view.kind === 'starred'),
-          stats.failed ? navItem('failed', '需要处理', stats.failed, () => setView({ kind: 'failed', value: '' }), view.kind === 'failed') : null,
+          navItem('all', '全部文章', stats.total, () => setView({ kind: 'all', value: '' }), view.kind === 'all', null, 'all'),
+          navItem('unread', '未读', stats.unread, () => setView({ kind: 'unread', value: '' }), view.kind === 'unread', null, 'unread'),
+          navItem('starred', '收藏', stats.starred, () => setView({ kind: 'starred', value: '' }), view.kind === 'starred', null, 'star'),
+          stats.failed ? navItem('failed', '需要处理', stats.failed, () => setView({ kind: 'failed', value: '' }), view.kind === 'failed', null, 'warn') : null,
 
           h('div', { className: 'xal-nav-title' }, '收藏夹'),
           ...collections.map((item) => h(
@@ -862,9 +926,9 @@
                     if (event.key === 'Escape') { setShowAddCollection(false); setNewCollection(''); }
                   },
                 }),
-                h('button', { className: 'xal-btn', onClick: addCollection }, '建'),
+                h('button', { className: 'xal-btn', onClick: addCollection, title: '创建' }, h(Glyph, { name: 'check' })),
               )
-            : h('div', { className: 'xal-nav-add' }, h('button', { className: 'xal-btn ghost', onClick: () => setShowAddCollection(true) }, '+ 新建收藏夹')),
+            : h('div', { className: 'xal-nav-add' }, h('button', { className: 'xal-btn ghost', onClick: () => setShowAddCollection(true) }, h(Glyph, { name: 'plus' }), h('span', null, '新建收藏夹'))),
 
           stats.authors.length ? h('div', { className: 'xal-nav-title' }, '博主') : null,
           ...stats.authors.slice(0, 30).map((author) => navItem(
@@ -873,10 +937,12 @@
             author.count,
             () => setView({ kind: 'author', value: author.username || author.name }),
             view.kind === 'author' && view.value === (author.username || author.name),
+            null,
+            'author',
           )),
 
           h('div', { style: { marginTop: 'auto', paddingTop: 12 } },
-            h('button', { className: 'xal-nav-item', onClick: () => setDialog('settings') }, h('span', { className: 'xal-nav-label' }, '设置'))),
+            h('button', { className: 'xal-nav-item', onClick: () => setDialog('settings') }, h(Glyph, { name: 'settings' }), h('span', { className: 'xal-nav-label' }, '设置'))),
         ),
 
         // 中栏：文章列表
@@ -887,7 +953,7 @@
             'div',
             { className: 'xal-head' },
             h('h1', { title: viewLabel }, viewLabel),
-            h('button', { className: 'xal-btn primary', onClick: () => setDialog('add'), title: '添加 X 链接' }, '+ 添加'),
+            h('button', { className: 'xal-btn primary', onClick: () => setDialog('add'), title: '添加 X 链接' }, h(Glyph, { name: 'plus' }), h('span', null, '添加')),
           ),
           h(
             'div',
@@ -899,7 +965,7 @@
               onChange: (event) => setQuery(event.target.value),
               spellCheck: false,
             }),
-            stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: '重试所有失败的下载' }, '重试') : null,
+            stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: '重试所有失败的下载' }, h(Glyph, { name: 'refresh' }), h('span', null, '重试')) : null,
           ),
           error ? h('div', { className: 'xal-banner' }, error) : null,
           h(
@@ -918,7 +984,7 @@
                     { className: 'xal-item-top' },
                     h(StatusDot, { status: item.downloadStatus }),
                     h('span', { className: 'xal-item-title' }, item.title || (item.downloadStatus === 'ready' ? '（无标题）' : '帖子 ' + item.postId)),
-                    item.starred ? h('span', { style: { color: 'var(--dsw-alias-state-warn-primary)' }, title: '已收藏' }, '★') : null,
+                    item.starred ? h('span', { style: { color: 'var(--dsw-alias-state-warn-primary)', display: 'inline-flex' }, title: '已收藏' }, h(Glyph, { name: 'star', size: 11 })) : null,
                   ),
                   item.excerpt ? h('div', { className: 'xal-item-excerpt' }, item.excerpt) : null,
                   h(
@@ -956,11 +1022,13 @@
                   h(
                     'div',
                     { style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
-                    h('button', { className: 'xal-btn', onClick: () => toggleStar(selected) }, selected.starred ? '★ 已收藏' : '☆ 收藏'),
-                    h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: '在资源管理器中显示该文件' }, '📂 打开所在位置'),
-                    h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, '打开原帖'),
-                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false) }, '从库中移除'),
-                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, true) }, '删除含文件'),
+                    h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
+                      h(Glyph, { name: 'star' }),
+                      h('span', null, selected.starred ? '已收藏' : '收藏')),
+                    h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: '在资源管理器中显示该文件' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开所在位置')),
+                    h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, '打开原帖')),
+                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: '只移除索引，保留磁盘文件' }, h(Glyph, { name: 'close' }), h('span', null, '从库中移除')),
+                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, true), title: '同时删除磁盘上的文件' }, h(Glyph, { name: 'trash' }), h('span', null, '删除含文件')),
                   ),
                   h('h1', { className: 'xal-title' }, content.title || selected.title),
                   h(
@@ -987,7 +1055,8 @@
                             ? '正在下载，稍候会自动出现'
                             : (selected.lastError || '这篇文章还没有可读内容')),
                         h('div', { style: { marginTop: 10 } },
-                          h('button', { className: 'xal-btn', onClick: () => call('download', { postIds: [selected.postId] }).then((result) => refresh(result.state)).catch((err) => setError(err.message)) }, '重新下载')),
+                          h('button', { className: 'xal-btn', onClick: () => call('download', { postIds: [selected.postId] }).then((result) => refresh(result.state)).catch((err) => setError(err.message)) }, h(Glyph, { name: 'refresh' }), h('span', null, '重新下载')),
+                        ),
                       )
                     : h('div', null,
                         h('b', null, stats.total ? '选择一篇开始阅读' : 'X 文章库'),
@@ -996,8 +1065,8 @@
                             ? '在左侧选一篇已下载的文章，正文会显示在这里。'
                             : '把公开的 X 帖子或长文链接贴进来，会自动转成可离线阅读的 Markdown，并按收藏夹和博主归类。'),
                         h('div', { style: { marginTop: 14 } },
-                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, '添加链接'),
-                          h('button', { className: 'xal-btn', style: { marginLeft: 8 }, onClick: openStorageFolder, title: '在资源管理器中打开存储目录' }, '📂 打开存储目录'),
+                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, h(Glyph, { name: 'plus' }), h('span', null, '添加链接')),
+                          h('button', { className: 'xal-btn', style: { marginLeft: 8 }, onClick: openStorageFolder, title: '在资源管理器中打开存储目录' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开存储目录')),
                         ),
                       ),
               ),

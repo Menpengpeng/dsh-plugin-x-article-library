@@ -108,4 +108,32 @@ for (const cls of ['.xal-root', '.xal-nav', '.xal-list-col', '.xal-reader', '.xa
 }
 console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
 
+// 图标集：所有被引用的名字都必须有定义，且统一走 currentColor 描边（跟随主题）。
+{
+  const iconBlock = source.slice(source.indexOf('const ICONS = {'), source.indexOf('/** 渲染一个线性图标'));
+  const defined = new Set([...iconBlock.matchAll(/^\s+(\w+): '/gm)].map((match) => match[1]));
+  assert.ok(defined.size >= 10, '图标集应有足够条目，实际 ' + defined.size);
+
+  const referenced = new Set([...source.matchAll(/h\(Glyph, \{ name: '(\w+)'/g)].map((match) => match[1]));
+  // navItem 通过变量传图标名，单独收集。
+  for (const match of source.matchAll(/navItem\([^)]*?'(\w+)',?\s*\)/gs)) referenced.add(match[1]);
+  for (const name of ['all', 'unread', 'star', 'warn', 'author', 'settings', 'folder', 'folderOpen', 'plus', 'refresh', 'scan', 'external', 'trash', 'close', 'check', 'chevronUp']) {
+    referenced.add(name);
+  }
+
+  const missing = [...referenced].filter((name) => !defined.has(name));
+  assert.deepEqual(missing, [], '引用了未定义的图标：' + missing.join(', '));
+  console.log('图标 OK：定义 ' + defined.size + ' 个，引用 ' + referenced.size + ' 个');
+
+  assert.ok(source.includes("stroke: 'currentColor'"), '图标应使用 currentColor，自动跟随主题');
+  assert.ok(!/[\u{1F4C1}\u{1F4C2}\u2605\u2606]|📂|📁|★|☆/u.test(cssText), '样式表不应残留 emoji 图标');
+}
+
+// 界面上不应再有靠 emoji 充当的图标（统一改成 SVG）。
+{
+  const emojiIcons = [...source.matchAll(/(?:'|\s)(📂|📁|★|☆|➕|🗑)(?:\s|')/gu)].map((match) => match[1]);
+  assert.deepEqual(emojiIcons, [], '源码中不应残留 emoji 图标：' + emojiIcons.join(' '));
+  console.log('无 emoji 图标残留 OK');
+}
+
 console.log('\n客户端模块测试全部通过。');
