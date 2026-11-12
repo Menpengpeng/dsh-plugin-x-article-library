@@ -143,6 +143,7 @@ x-article-library/
   lib/core.js           # 链接解析、内容抓取、Front Matter、图片与文件写入
   lib/library.js        # 索引存储、下载队列、文章与收藏夹服务
   lib/reveal.js         # 在系统文件管理器中定位文件 / 打开目录（跨平台）
+  tests/                # 无需依赖的自测脚本
   locale/zh.json        # 中文文案
   locale/en.json        # 英文文案
   icon.svg              # 侧边栏图标
@@ -158,6 +159,12 @@ node --check client.js
 node --check lib/http.js
 node --check lib/core.js
 node --check lib/library.js
+node --check lib/reveal.js
+
+# 运行测试（无需安装依赖）
+node tests/reveal.test.mjs    # 存储位置切换 + 文件定位（含真实 Explorer 调用）
+node tests/markdown.test.mjs  # 渲染器安全与语法，48 项
+node tests/client.test.mjs    # 客户端模块加载与 slot 注册
 ```
 
 调试接口需要带 DSH 会话凭据，接口本身会拒绝未认证请求。想看日志可在 DSH 启动终端观察。

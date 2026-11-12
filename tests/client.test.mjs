@@ -1,0 +1,111 @@
+﻿// 客户端模块加载测试：用桩 __ModuleLoader__ / require / ctx 真实执行 client.js。
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const source = await fs.readFile(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../client.js'), 'utf8');
+
+// 极简 React 桩：只需要 createElement 与 hooks 能被调用。
+const React = {
+  createElement: (type, props, ...children) => ({ type, props, children }),
+  useState: (initial) => [typeof initial === 'function' ? initial() : initial, () => {}],
+  useEffect: () => {},
+  useMemo: (fn) => fn(),
+  useCallback: (fn) => fn,
+  useRef: (initial) => ({ current: initial }),
+};
+
+let loaded = null;
+const registrations = [];
+const injections = [];
+
+globalThis.window = {
+  __ModuleLoader__: {
+    load(definition) {
+      loaded = definition;
+    },
+  },
+};
+
+// 执行模块定义（不进入 factory，先看外层结构）。
+const fn = new Function('window', source);
+fn(globalThis.window);
+
+assert.ok(loaded, '调用了 __ModuleLoader__.load');
+assert.equal(loaded.id, '@menpengpeng/dsh-plugin-x-article-library', '模块 id 应为包名');
+assert.equal(typeof loaded.factory, 'function', 'factory 应为函数');
+console.log('模块外壳 OK：id =', loaded.id);
+
+const moduleExports = loaded.factory((name) => {
+  if (name === 'react') return React;
+  throw new Error(`未预期的依赖：${name}`);
+});
+
+assert.ok(Array.isArray(moduleExports.inject), '应声明 inject');
+assert.deepEqual(moduleExports.inject, ['slots', 'layout'], 'inject 应为 slots 与 layout');
+assert.equal(typeof moduleExports.apply, 'function', '应导出 apply');
+console.log('模块导出 OK：inject =', moduleExports.inject.join(', '));
+
+const ctx = {
+  slots: {
+    inject(name, callback) {
+      injections.push(name);
+      return callback();
+    },
+    register(options, component) {
+      registrations.push({ options, component });
+      return () => {};
+    },
+  },
+};
+
+moduleExports.apply(ctx);
+
+console.log('注入的 slot：', injections.join(', '));
+assert.deepEqual(injections, ['sidebar.panellist', 'main'], '应注入两个 slot');
+
+const sidebar = registrations.find((item) => item.options.name === 'sidebar.panellist');
+assert.ok(sidebar, '应注册 sidebar.panellist');
+assert.equal(sidebar.options.id, 'x-article-library', '侧边栏 id 应稳定');
+assert.equal(sidebar.options.label, 'X 文章', '侧边栏文案应为中文');
+assert.equal(typeof sidebar.component, 'function', '侧边栏图标应为组件');
+assert.ok(Number.isFinite(sidebar.options.order), 'order 应为数字');
+
+const main = registrations.find((item) => item.options.name === 'main');
+assert.ok(main, '应注册 main');
+assert.equal(main.options.key, 'x-article-library', 'main 的 key 应与侧边栏 id 对应');
+assert.equal(typeof main.component, 'function', '主面板应为组件');
+console.log('Slot 注册 OK：sidebar(order=' + sidebar.options.order + ') + main(key=' + main.options.key + ')');
+
+// 图标组件应能渲染出 SVG。
+const icon = sidebar.component({ active: true });
+assert.ok(icon && icon.type === 'div', '图标应渲染 div 容器');
+const svg = JSON.stringify(icon);
+assert.ok(svg.includes('svg'), '图标应包含 svg');
+assert.ok(svg.includes('brand-primary'), '激活态应使用主题色');
+
+// 主面板首次渲染（state 为空时走 loading 分支）。
+const tree = main.component({});
+assert.ok(tree, '主面板应能渲染');
+assert.equal(tree.props.className, 'xal-root', '主面板根节点应有样式类');
+const serialized = JSON.stringify(tree);
+assert.ok(serialized.includes('xal-spin'), '初始应显示加载态');
+
+// 样式由 Styles 组件提供，桩环境下需显式调用才能拿到内容。
+const stylesComponent = tree.children.find((child) => child && typeof child.type === 'function');
+assert.ok(stylesComponent, '应包含 Styles 组件');
+const cssNode = stylesComponent.type({});
+assert.equal(cssNode.type, 'style', 'Styles 应渲染 style 节点');
+const cssText = String(cssNode.children[0]);
+assert.ok(cssText.length > 2000, '样式表应有实质内容');
+assert.ok(cssText.includes('grid-template-columns:minmax(190px,236px)'), '应包含三栏布局定义');
+assert.ok(cssText.includes('@container'), '应包含容器查询响应式规则');
+console.log('主面板渲染 OK：加载态 + 三栏网格 + 容器查询');
+
+for (const cls of ['.xal-root', '.xal-nav', '.xal-list-col', '.xal-reader', '.xal-md', '.xal-dialog', '.xal-overlay', '.xal-item', '.xal-btn']) {
+  assert.ok(cssText.includes(cls), `样式应包含 ${cls}`);
+}
+console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
+
+console.log('\n客户端模块测试全部通过。');

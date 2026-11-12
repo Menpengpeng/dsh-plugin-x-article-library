@@ -26,6 +26,9 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "test": "node tests/reveal.test.mjs && node tests/markdown.test.mjs && node tests/client.test.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -37,6 +40,7 @@
     "client.js",
     "cordis.patch.yml",
     "lib",
+    "tests",
     "locale/*.json",
     "icon.svg",
     "LICENSE",
