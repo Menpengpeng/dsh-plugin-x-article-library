@@ -136,4 +136,19 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('无 emoji 图标残留 OK');
 }
 
+// 右键菜单：列表项与收藏夹都要挂 onContextMenu，菜单项要覆盖需求里的两个动作。
+{
+  assert.ok(source.includes('function ContextMenu'), '应有通用右键菜单组件');
+  assert.ok(source.includes('function PromptDialog'), '应有重命名输入框');
+  assert.ok(source.includes('function CollectionPicker'), '应有收藏夹勾选框');
+  assert.ok(source.includes('调整所属收藏夹'), '右键菜单应能调整所属收藏夹');
+  assert.ok(source.includes('重命名标题'), '右键菜单应能重命名文章');
+  assert.ok(source.includes('重命名收藏夹'), '收藏夹右键应能重命名');
+
+  // 两个右键入口都要真的接上。
+  assert.ok(/onContextMenu: \(event\) => openArticleMenu\(event, item\)/.test(source), '文章卡片应挂 openArticleMenu');
+  assert.ok(/onContextMenu: \(event\) => openCollectionMenu\(event, item\)/.test(source), '收藏夹应挂 openCollectionMenu');
+  console.log('右键菜单 OK：文章卡片 + 收藏夹两个入口，动作齐全');
+}
+
 console.log('\n客户端模块测试全部通过。');

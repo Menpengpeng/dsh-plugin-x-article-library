@@ -282,6 +282,159 @@
       );
     }
 
+    /**
+     * 通用右键菜单。
+     * 定位用 fixed + 点击坐标，并在打开时夹到视口内，避免靠边溢出。
+     */
+    function ContextMenu({ menu, onClose }) {
+      const items = menu.items || [];
+      // Esc 关闭：菜单是临时浮层，键盘用户也要能退出。
+      useEffect(() => {
+        const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+      }, [onClose]);
+      return h(
+        'div',
+        {
+          className: 'xal-ctx-overlay',
+          onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); },
+          onContextMenu: (event) => { event.preventDefault(); onClose(); },
+        },
+        h(
+          'div',
+          {
+            className: 'xal-ctx',
+            onContextMenu: (event) => event.preventDefault(),
+            style: {
+              left: Math.max(8, Math.min(menu.x, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 240)),
+              top: Math.max(8, Math.min(menu.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - (items.length * 34 + 20))),
+            },
+          },
+          menu.title ? h('div', { className: 'xal-ctx-title' }, menu.title) : null,
+          ...items.map((item, index) => (item.separator
+            ? h('div', { key: 'sep-' + index, className: 'xal-ctx-sep' })
+            : h(
+                'button',
+                {
+                  key: item.label + index,
+                  className: 'xal-ctx-item' + (item.danger ? ' danger' : '') + (item.checked ? ' checked' : ''),
+                  onClick: () => { onClose(); item.onClick(); },
+                },
+                h('span', { className: 'xal-ctx-icon' }, item.checked ? h(Glyph, { name: 'check', size: 12 }) : null),
+                h('span', null, item.label),
+              ))),
+        ),
+      );
+    }
+
+    /** 勾选式收藏夹选择框：右键「调整收藏夹」用。 */
+    function CollectionPicker({ article, collections, onClose, onSave }) {
+      const [selected, setSelected] = useState([...(article.collectionIds || [])]);
+      const [busy, setBusy] = useState(false);
+      const [error, setError] = useState('');
+
+      function toggle(id) {
+        setSelected((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+      }
+
+      async function save() {
+        setBusy(true);
+        try {
+          await onSave(selected);
+          onClose();
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      return h(
+        'div',
+        { className: 'xal-overlay', onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
+        h(
+          'div',
+          { className: 'xal-dialog', style: { maxWidth: 440 } },
+          h('h2', null, '调整所属收藏夹'),
+          h('div', { className: 'xal-hint', style: { marginBottom: 10 } }, article.title || '帖子 ' + article.postId),
+          collections.length
+            ? h('div', { className: 'xal-picker-list' },
+                ...collections.map((collection) => {
+                  const checked = selected.includes(collection.id);
+                  return h(
+                    'button',
+                    {
+                      key: collection.id,
+                      className: 'xal-picker-item' + (checked ? ' checked' : ''),
+                      onClick: () => toggle(collection.id),
+                    },
+                    h('span', { className: 'xal-picker-box' }, checked ? h(Glyph, { name: 'check', size: 11 }) : null),
+                    collection.color ? h('span', { className: 'xal-dot-mark', style: { background: collection.color } }) : null,
+                    h('span', null, collection.name),
+                  );
+                }))
+            : h('div', { className: 'xal-hint' }, '还没有收藏夹，先在左栏建一个。'),
+          error ? h('div', { className: 'xal-banner' }, error) : null,
+          h('div', { className: 'xal-row', style: { justifyContent: 'flex-end', marginTop: 14 } },
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
+            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存'))),
+        ),
+      );
+    }
+
+
+    /** 单行输入对话框：给「重命名文章 / 收藏夹」用。 */
+    function PromptDialog({ title, label, value, placeholder, onClose, onSubmit }) {
+      const [text, setText] = useState(value || '');
+      const [busy, setBusy] = useState(false);
+      const [error, setError] = useState('');
+
+      async function submit() {
+        const next = text.trim();
+        if (!next) { setError('不能为空'); return; }
+        if (next === value) { onClose(); return; }
+        setBusy(true);
+        try {
+          await onSubmit(next);
+          onClose();
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      return h(
+        'div',
+        { className: 'xal-overlay', onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
+        h(
+          'div',
+          { className: 'xal-dialog', style: { maxWidth: 420 } },
+          h('h2', null, title),
+          h('div', { className: 'xal-field' },
+            label ? h('label', null, label) : null,
+            h('input', {
+              className: 'xal-input',
+              autoFocus: true,
+              value: text,
+              placeholder,
+              spellCheck: false,
+              onChange: (event) => setText(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') submit();
+                if (event.key === 'Escape') onClose();
+              },
+            })),
+          error ? h('div', { className: 'xal-banner' }, error) : null,
+          h('div', { className: 'xal-row', style: { justifyContent: 'flex-end', marginTop: 14 } },
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
+            h('button', { className: 'xal-btn primary', onClick: submit, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存'))),
+        ),
+      );
+    }
+
+
     const CSS = [
       '.xal-root{display:grid;grid-template-columns:minmax(190px,236px) minmax(260px,360px) minmax(0,1fr);height:100%;min-height:0;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;container-type:inline-size}',
       '.xal-col{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}',
@@ -357,6 +510,21 @@
       '.xal-banner.info{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);border-color:var(--dsw-alias-border-l1)}',
       '.xal-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.42);display:grid;place-items:center;padding:20px;box-sizing:border-box}',
       '.xal-dialog{width:min(560px,100%);max-height:min(80vh,720px);overflow-y:auto;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:18px;box-sizing:border-box;box-shadow:0 18px 48px rgba(0,0,0,.32)}',
+      '.xal-ctx-overlay{position:fixed;inset:0;z-index:80;background:transparent}',
+      '.xal-ctx{position:fixed;min-width:200px;max-width:260px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);border-radius:9px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.34);box-sizing:border-box}',
+      '.xal-ctx-title{font-size:11px;color:var(--dsw-alias-label-caption);padding:5px 9px 6px;border-bottom:1px solid var(--dsw-alias-border-l1);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.xal-ctx-item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;background:transparent;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:12px;padding:7px 9px;border-radius:6px;cursor:pointer}',
+      '.xal-ctx-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+      '.xal-ctx-item.danger{color:var(--dsw-alias-state-error-primary)}',
+      '.xal-ctx-icon{display:inline-flex;width:12px;justify-content:center;color:var(--dsw-alias-brand-primary)}',
+      '.xal-ctx-sep{height:1px;background:var(--dsw-alias-border-l1);margin:4px 6px}',
+      '.xal-picker-list{display:flex;flex-direction:column;gap:3px;max-height:min(46vh,340px);overflow-y:auto;padding:3px}',
+      '.xal-picker-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:12px;padding:7px 9px;border-radius:6px;cursor:pointer}',
+      '.xal-picker-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+      '.xal-picker-item.checked{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-border-l2)}',
+      '.xal-picker-box{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:3px;flex:none;color:var(--dsw-alias-brand-primary)}',
+      '.xal-picker-item.checked .xal-picker-box{border-color:var(--dsw-alias-brand-primary)}',
+      '.xal-item{position:relative}',
       '.xal-dialog h2{margin:0 0 4px;font-size:16px;font-weight:650}',
       '.xal-dialog .xal-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin:0 0 12px;line-height:1.55}',
       '.xal-field{display:grid;gap:5px;margin-bottom:11px}',
@@ -694,6 +862,9 @@
       const [dialog, setDialog] = useState('');
       const [newCollection, setNewCollection] = useState('');
       const [showAddCollection, setShowAddCollection] = useState(false);
+      const [contextMenu, setContextMenu] = useState(null);
+      const [prompt, setPrompt] = useState(null);
+      const [picker, setPicker] = useState(null);
       const readerRef = useRef(null);
 
       const load = useCallback(async () => {
@@ -808,6 +979,91 @@
         }
       }
 
+      // ===== 右键菜单 =====
+
+      /** 文章卡片右键：改标题、改收藏夹、收藏、定位、移除。 */
+      function openArticleMenu(event, item) {
+        event.preventDefault();
+        const position = { x: event.clientX, y: event.clientY };
+        const items = [
+          {
+            label: '重命名标题…',
+            onClick: () => setPrompt({
+              title: '重命名文章',
+              label: '标题',
+              value: item.title || '',
+              onSubmit: async (next) => {
+                const result = await call('update', { postId: item.postId, patch: { title: next } });
+                await refresh(result.state);
+                if (item.postId === selectedId) setContent((prev) => (prev ? { ...prev, title: next } : prev));
+              },
+            }),
+          },
+          {
+            label: item.starred ? '取消收藏' : '加入收藏',
+            onClick: () => toggleStar(item),
+          },
+          {
+            label: '调整所属收藏夹…',
+            onClick: () => setPicker({
+              article: item,
+              collections,
+              onSave: async (ids) => {
+                const result = await call('update', { postId: item.postId, patch: { collectionIds: ids } });
+                await refresh(result.state);
+              },
+            }),
+          },
+          { separator: true },
+        ];
+
+        if (item.downloadStatus === 'ready') {
+          items.push({ label: '打开所在位置', onClick: () => revealArticle(item) });
+        }
+        items.push({ label: '从库中移除', danger: true, onClick: () => removeArticle(item, false) });
+        items.push({ label: '删除含文件', danger: true, onClick: () => removeArticle(item, true) });
+
+        setContextMenu({ ...position, title: item.title || '帖子 ' + item.postId, items });
+      }
+
+      /** 收藏夹右键：重命名、删除。 */
+      function openCollectionMenu(event, collection) {
+        event.preventDefault();
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          title: collection.name,
+          items: [
+            {
+              label: '重命名收藏夹…',
+              onClick: () => setPrompt({
+                title: '重命名收藏夹',
+                label: '名称',
+                value: collection.name,
+                onSubmit: async (next) => {
+                  const result = await call('updateCollection', { id: collection.id, patch: { name: next } });
+                  await refresh(result.state);
+                },
+              }),
+            },
+            {
+              label: '删除收藏夹',
+              danger: true,
+              onClick: async () => {
+                try {
+                  const result = await call('deleteCollection', { id: collection.id });
+                  if (view.kind === 'collection' && view.value === collection.id) setView({ kind: 'all', value: '' });
+                  await refresh(result.state);
+                } catch (err) {
+                  setError(err.message);
+                }
+              },
+            },
+          ],
+        });
+      }
+
+
       /** 在系统资源管理器中定位这篇的 Markdown 文件。 */
       async function revealArticle(item) {
         try {
@@ -894,6 +1150,7 @@
               {
                 className: 'xal-nav-item' + (view.kind === 'collection' && view.value === item.id ? ' active' : ''),
                 onClick: () => setView({ kind: 'collection', value: item.id }),
+                onContextMenu: (event) => openCollectionMenu(event, item),
                 style: { flex: 1, minWidth: 0 },
               },
               h('span', { className: 'xal-dot-mark', style: item.color ? { background: item.color } : undefined }),
@@ -978,6 +1235,7 @@
                     key: item.postId,
                     className: 'xal-item' + (item.postId === selectedId ? ' active' : ''),
                     onClick: () => (item.downloadStatus === 'ready' ? openArticle(item.postId) : setSelectedId(item.postId)),
+                    onContextMenu: (event) => openArticleMenu(event, item),
                   },
                   h(
                     'div',
@@ -1074,6 +1332,21 @@
 
         dialog === 'add' ? h(AddDialog, { state, onClose: () => setDialog(''), onDone: (next) => refresh(next), onError: setError }) : null,
         dialog === 'settings' ? h(SettingsDialog, { state, onClose: () => setDialog(''), onSaved: (next) => refresh(next), onError: setError }) : null,
+
+        contextMenu ? h(ContextMenu, { menu: contextMenu, onClose: () => setContextMenu(null) }) : null,
+        prompt ? h(PromptDialog, {
+          title: prompt.title,
+          label: prompt.label,
+          value: prompt.value,
+          onClose: () => setPrompt(null),
+          onSubmit: prompt.onSubmit,
+        }) : null,
+        picker ? h(CollectionPicker, {
+          article: picker.article,
+          collections: picker.collections,
+          onClose: () => setPicker(null),
+          onSave: picker.onSave,
+        }) : null,
       );
     }
 
