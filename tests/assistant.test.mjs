@@ -5,11 +5,35 @@ import {
   clipArticle,
   consumeStream,
   trimHistory,
+  textBlocks,
   MAX_ARTICLE_CHARS,
   MAX_HISTORY_TURNS,
 } from '../lib/assistant.js';
 
 const selection = { provider: 'p', model: 'm' };
+
+// content 必须是 block 数组：宿主对它做 content.some(...)，
+// 直接传字符串会报 "content.some is not a function"。
+function flatText(message) {
+  if (!Array.isArray(message.content)) {
+    throw new Error('message.content 必须是数组，实际是 ' + typeof message.content);
+  }
+  return message.content.map((block) => {
+    if (block.type !== 'text') throw new Error('未预期的 block 类型：' + block.type);
+    return block.text;
+  }).join('');
+}
+
+function assertAllBlocks(messages, label) {
+  for (const message of messages) {
+    assert.ok(Array.isArray(message.content), `${label}：content 必须是数组`);
+    assert.ok(message.content.length > 0, `${label}：content 不能为空`);
+    for (const block of message.content) {
+      assert.equal(block.type, 'text', `${label}：block 类型应为 text`);
+      assert.equal(typeof block.text, 'string', `${label}：block.text 应为字符串`);
+    }
+  }
+}
 
 // ---- 1. 首轮总结：不传 question 就是总结，且正文完整送进去 ----
 {
@@ -18,9 +42,11 @@ const selection = { provider: 'p', model: 'm' };
   assert.equal(req.model, 'm');
   assert.equal(req.messages.length, 1, '总结只有一条 user 消息');
   assert.equal(req.messages[0].role, 'user');
-  assert.ok(req.messages[0].content.includes('正文内容'), '正文应送进提示');
-  assert.ok(req.messages[0].content.includes('标题'), '标题应带上');
-  assert.ok(req.messages[0].content.includes('结构化'), '应包含总结指令');
+  assertAllBlocks(req.messages, '首轮总结');
+  const text = flatText(req.messages[0]);
+  assert.ok(text.includes('正文内容'), '正文应送进提示');
+  assert.ok(text.includes('标题'), '标题应带上');
+  assert.ok(text.includes('结构化'), '应包含总结指令');
   assert.ok(req.system && req.system.length > 0, '应有 system 提示');
   console.log('首轮总结请求 OK');
 }
@@ -37,12 +63,22 @@ const selection = { provider: 'p', model: 'm' };
     ],
     question: '第二个问题',
   });
+  assertAllBlocks(req.messages, '多轮追问');
   const last = req.messages[req.messages.length - 1];
   assert.equal(last.role, 'user');
-  assert.equal(last.content, '第二个问题');
-  assert.ok(req.messages.some((m) => m.content === '第一个问题'), '历史应保留');
-  assert.ok(req.messages.some((m) => m.content === '第一个回答'), '历史回答应保留');
+  assert.equal(flatText(last), '第二个问题');
+  assert.ok(req.messages.some((m) => flatText(m) === '第一个问题'), '历史应保留');
+  assert.ok(req.messages.some((m) => flatText(m) === '第一个回答'), '历史回答应保留');
   console.log('多轮追问请求 OK');
+}
+
+// ---- 2.5. textBlocks：纯文本包成单个 text block ----
+{
+  const blocks = textBlocks('你好');
+  assert.deepEqual(blocks, [{ type: 'text', text: '你好' }]);
+  assert.deepEqual(textBlocks(undefined), [{ type: 'text', text: '' }], 'undefined 也要安全');
+  assert.deepEqual(textBlocks(123), [{ type: 'text', text: '123' }], '非字符串要转成字符串');
+  console.log('textBlocks OK');
 }
 
 // ---- 3. 超长正文截断并明确告知 ----

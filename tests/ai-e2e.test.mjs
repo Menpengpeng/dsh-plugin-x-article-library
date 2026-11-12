@@ -190,15 +190,22 @@ assert.equal(record.title, '测试文章标题', 'scan 应从 Front Matter 读�
   assert.equal(sent.reasoningEffort, 'medium', 'reasoningEffort 应透传');
   assert.ok(sent.system && sent.system.length > 0, '应有 system');
   assert.ok(sent.messages.length >= 1, '应有消息');
-  const flat = JSON.stringify(sent.messages);
-  assert.ok(flat.includes('这是文章正文'), '正文应真的进提示');
-  if (!flat.includes('测试文章标题')) {
-    console.log('DEBUG 实际提示：', flat.slice(0, 400));
-    console.log('DEBUG 索引标题：', record.title);
+
+  // 关键回归：content 必须是 block 数组。宿主内部对它做 content.some(...)，
+  // 传裸字符串会在运行时炸 "content.some is not a function"。
+  for (const message of sent.messages) {
+    assert.ok(Array.isArray(message.content), '每条消息的 content 必须是数组（实际：' + typeof message.content + '）');
+    for (const block of message.content) {
+      assert.equal(block.type, 'text', 'block 类型应为 text');
+      assert.equal(typeof block.text, 'string', 'block.text 应为字符串');
+    }
   }
+
+  const flat = sent.messages.flatMap((m) => m.content.map((b) => b.text)).join('\n');
+  assert.ok(flat.includes('这是文章正文'), '正文应真的进提示');
   assert.ok(flat.includes('测试文章标题'), '标题应真的进提示');
   assert.ok(flat.includes('结构化'), '总结指令应存在');
-  console.log('首轮总结 E2E OK：正文与标题都已送进模型');
+  console.log('首轮总结 E2E OK：正文与标题都已送进模型，content 为 block 数组');
 }
 
 // 4) 追问：历史应被带上
@@ -214,12 +221,16 @@ assert.equal(record.title, '测试文章标题', 'scan 应从 Front Matter 读�
     ],
   });
   assert.equal(result.status, 200, '追问应成功');
-  const flat = JSON.stringify(captured[0].messages);
+  const sentMessages = captured[0].messages;
+  for (const message of sentMessages) {
+    assert.ok(Array.isArray(message.content), '追问的每条消息 content 也必须是数组');
+  }
+  const flat = sentMessages.flatMap((m) => m.content.map((b) => b.text)).join('\n');
   assert.ok(flat.includes('第一问'), '历史问题应带上');
   assert.ok(flat.includes('第一答'), '历史回答应带上');
   assert.ok(flat.includes('第二个要点是什么'), '本轮问题应带上');
   assert.ok(flat.includes('这是文章正文'), '追问也应带原文');
-  console.log('多轮追问 E2E OK：历史与原文都在');
+  console.log('多轮追问 E2E OK：历史与原文都在，content 为 block 数组');
 }
 
 // 5) 模型报错时应把错误码透出来，不能当成空回答
