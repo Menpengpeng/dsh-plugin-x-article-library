@@ -1,4 +1,4 @@
-// Host 半部：注册 HTTP 接口与 AI 工具，管理资料库服务的生命周期。
+﻿// Host 半部：注册 HTTP 接口与 AI 工具，管理资料库服务的生命周期。
 
 import fs from 'node:fs/promises';
 import os from 'node:os';
