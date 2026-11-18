@@ -609,7 +609,10 @@
       '.xal-dot.error{background:var(--dsw-alias-state-error-primary)}',
       '@keyframes xal-pulse{0%,100%{opacity:1}50%{opacity:.35}}',
       '.xal-reader-body{flex:1;overflow-y:auto;padding:18px 26px 60px}',
-      '.xal-reader-inner{max-width:720px;margin:0 auto;font-size:var(--xal-reader-font-size,14px)}',
+      '.xal-reader-inner{max-width:720px;margin:0 auto;font-size:var(--xal-reader-font-size,14px);position:relative}',
+      // 上次读到的位置：正文内一条红线，仅「未读完」时显示。
+      '.xal-reading-mark{position:absolute;left:-8px;right:-8px;height:2px;background:var(--dsw-alias-state-error-primary);pointer-events:none;z-index:5}',
+      '.xal-reading-mark::after{content:"上次读到这里";position:absolute;right:0;top:-10px;background:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-bg-base);font-size:10px;line-height:1.5;padding:1px 6px;border-radius:4px;white-space:nowrap}',
       '.xal-reader h1.xal-title{font-size:1.5714em;line-height:1.35;margin:0 0 8px;font-weight:700;word-break:break-word}',
       '.xal-reader-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
       '.xal-md{line-height:1.72;word-break:break-word}',
@@ -1022,7 +1025,10 @@
       const [focusMode, setFocusMode] = useState(false);
       // 正文字号：先本地即时反馈，松手才写回设置，避免拖动时频繁落盘。
       const [fontSize, setFontSize] = useState(null);
+      // 上次读到的位置（正文内像素偏移），由阅读进度换算，仅未读完时显示红线。
+      const [markTop, setMarkTop] = useState(null);
       const readerRef = useRef(null);
+      const innerRef = useRef(null);
 
       const load = useCallback(async () => {
         try {
@@ -1164,6 +1170,26 @@
           node.removeEventListener('scroll', onScroll);
         };
       }, [selectedId, content]);
+
+      // 根据保存的阅读进度，在正文里算出「上次读到这里」的红线位置。
+      // 用 ResizeObserver 跟进图片加载与字号变化导致的高度变化。
+      useEffect(() => {
+        const inner = innerRef.current;
+        if (!inner || !content || !selectedId) { setMarkTop(null); return undefined; }
+        const progress = Number(content.readingProgress) || 0;
+        const readState = (articles.find((item) => item.postId === selectedId) || {}).readState;
+        // 只有未读完才画线；已读/未读都不画。
+        if (readState !== 'reading' || progress <= 0 || progress >= 1) { setMarkTop(null); return undefined; }
+        const measure = () => {
+          const height = inner.scrollHeight;
+          setMarkTop(Math.max(0, Math.min(height, height * progress)));
+        };
+        measure();
+        if (typeof ResizeObserver === 'undefined') return undefined;
+        const observer = new ResizeObserver(measure);
+        observer.observe(inner);
+        return () => observer.disconnect();
+      }, [content, selectedId, activeFont, articles]);
 
       // 阅读模式下按 Esc 退出，避免被沉浸式界面困住。
       useEffect(() => {
@@ -1510,14 +1536,14 @@
         // 右栏：阅读器
         h(
           'main',
-          { className: 'xal-col xal-reader', ref: readerRef },
+          { className: 'xal-col xal-reader' },
           selected && selected.downloadStatus === 'ready' && content
             ? h(
                 'div',
-                { className: 'xal-reader-body', style: { '--xal-reader-font-size': activeFont + 'px' } },
+                { className: 'xal-reader-body', ref: readerRef, style: { '--xal-reader-font-size': activeFont + 'px' } },
                 h(
                   'div',
-                  { className: 'xal-reader-inner' },
+                  { className: 'xal-reader-inner', ref: innerRef },
                   h(
                     'div',
                     { className: 'xal-tools', style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
@@ -1560,6 +1586,13 @@
                     h('span', null, content.imageCount + ' 张图片'),
                   ),
                   h('div', { className: 'xal-md', dangerouslySetInnerHTML: { __html: renderMarkdown(content.body, content.postId) } }),
+                  markTop !== null
+                    ? h('div', {
+                        className: 'xal-reading-mark',
+                        style: { top: markTop + 'px' },
+                        title: '上次读到的位置（' + Math.round((Number(content.readingProgress) || 0) * 100) + '%）',
+                      })
+                    : null,
                 ),
               )
             : h(                'div',

@@ -213,4 +213,17 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('阅读模式 OK：单列沉浸、隐藏功能菜单、悬浮按钮 + Esc 双退出');
 }
 
+// 上次读到的位置：仅「未读完」时在正文内按进度画一条红线。
+{
+  assert.ok(cssText.includes('.xal-reading-mark'), '应有红线样式');
+  assert.ok(/\.xal-reading-mark\{[^}]*position:absolute/.test(cssText), '红线应绝对定位在正文内');
+  assert.ok(cssText.includes('--dsw-alias-state-error-primary'), '红线应用主题错误色（红色）');
+  assert.ok(cssText.includes('上次读到这里'), '红线应有「上次读到这里」提示');
+  assert.ok(source.includes("className: 'xal-reading-mark'"), '正文应渲染红线元素');
+  assert.ok(source.includes('height * progress'), '红线位置应按阅读进度换算');
+  assert.ok(source.includes("readState !== 'reading'"), '仅未读完时显示红线');
+  assert.ok(source.includes('ResizeObserver'), '应跟随图片加载/字号变化重新测量位置');
+  console.log('上次读到红线 OK：仅未读完显示，按进度定位，随高度变化重算');
+}
+
 console.log('\n客户端模块测试全部通过。');
