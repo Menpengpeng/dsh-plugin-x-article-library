@@ -264,6 +264,8 @@
       // 字号：大 A 小 A，用于正文字号控件两端。
       fontLarger: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M14.6 19l2.9-8.2L20.4 19M15.5 16.6h3.9',
       fontSmaller: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M20.4 15.2h-5.2',
+      // 阅读模式：一本翻开的书。
+      book: 'M12 6.4C9.8 5 7.2 4.8 4.4 5.6v12c2.8-.8 5.4-.6 7.6.8 2.2-1.4 4.8-1.6 7.6-.8v-12C16.8 4.8 14.2 5 12 6.4zM12 6.4v12',
     };
 
     /** 渲染一个线性图标。size 默认 14。 */
@@ -548,6 +550,15 @@
       '.xal-root{display:grid;grid-template-columns:minmax(190px,236px) minmax(260px,360px) minmax(0,1fr);height:100%;min-height:0;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;container-type:inline-size}',
       // AI 侧栏打开时多一列；窄容器里改窄一点，避免正文被挤没。
       '.xal-root.ai-open{grid-template-columns:minmax(190px,236px) minmax(260px,340px) minmax(0,1fr) minmax(260px,340px)}',
+      // 阅读模式：整窗只留正文，隐藏导航、列表与工具栏，正文适当加宽居中。
+      '.xal-root.focus{grid-template-columns:minmax(0,1fr)}',
+      '.xal-root.focus .xal-nav,.xal-root.focus .xal-list-col{display:none}',
+      '.xal-root.focus .xal-reader-body{padding:34px 6vw 90px}',
+      '.xal-root.focus .xal-reader-inner{max-width:820px}',
+      '.xal-root.focus .xal-tools{opacity:0;height:0;overflow:hidden;margin:0;pointer-events:none}',
+      // 悬浮退出按钮：只在阅读模式出现，固定在右上角。
+      '.xal-focus-exit{position:absolute;top:14px;right:18px;z-index:30;display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:12px;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}',
+      '.xal-focus-exit:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
       '@container (max-width: 1100px){.xal-root.ai-open{grid-template-columns:minmax(170px,200px) minmax(220px,280px) minmax(0,1fr) minmax(230px,300px)}}',
       '.xal-col{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}',
       '.xal-nav{border-right:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);padding:12px 8px;gap:2px;overflow-y:auto}',
@@ -1007,6 +1018,8 @@
       const [prompt, setPrompt] = useState(null);
       const [picker, setPicker] = useState(null);
       const [aiOpen, setAiOpen] = useState(false);
+      // 阅读模式：隐藏导航/列表与工具栏，只留正文，沉浸式阅读。
+      const [focusMode, setFocusMode] = useState(false);
       // 正文字号：先本地即时反馈，松手才写回设置，避免拖动时频繁落盘。
       const [fontSize, setFontSize] = useState(null);
       const readerRef = useRef(null);
@@ -1080,8 +1093,9 @@
         setSelectedId(postId);
         setContent(null);
         setContentLoading(true);
-        // 换了文章就收起 AI 侧栏，避免还看着上一篇的总结。
+        // 换了文章就收起 AI 侧栏、退出阅读模式，避免还看着上一篇的状态。
         setAiOpen(false);
+        setFocusMode(false);
         try {
           const data = await call('read', { postId });
           setContent(data);
@@ -1150,6 +1164,16 @@
           node.removeEventListener('scroll', onScroll);
         };
       }, [selectedId, content]);
+
+      // 阅读模式下按 Esc 退出，避免被沉浸式界面困住。
+      useEffect(() => {
+        if (!focusMode) return undefined;
+        const onKey = (event) => {
+          if (event.key === 'Escape') setFocusMode(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [focusMode]);
 
       const refresh = async (next) => {
         if (next) setState(next);
@@ -1341,7 +1365,7 @@
 
       return h(
         'div',
-        { className: 'xal-root' + (aiOpen && selected && selected.downloadStatus === 'ready' && content ? ' ai-open' : ''), style: { position: 'relative' } },
+        { className: 'xal-root' + (aiOpen && selected && selected.downloadStatus === 'ready' && content ? ' ai-open' : '') + (focusMode && selected && selected.downloadStatus === 'ready' && content ? ' focus' : ''), style: { position: 'relative' } },
         h(Styles),
 
         // 左栏：资料库导航
@@ -1496,7 +1520,8 @@
                   { className: 'xal-reader-inner' },
                   h(
                     'div',
-                    { style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
+                    { className: 'xal-tools', style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
+                    h('button', { className: 'xal-btn primary', onClick: () => { setAiOpen(false); setFocusMode(true); }, title: '进入阅读模式（Esc 退出）' }, h(Glyph, { name: 'book' }), h('span', null, '阅读模式')),
                     h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: '用 AI 总结这篇文章，可继续追问' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
                       h(Glyph, { name: 'star' }),
@@ -1565,6 +1590,15 @@
                       ),
               ),
         ),
+
+        // 阅读模式的悬浮退出按钮，固定在右上角，随时可退出（或按 Esc）。
+        focusMode && selected && selected.downloadStatus === 'ready' && content
+          ? h('button', {
+              className: 'xal-focus-exit',
+              onClick: () => setFocusMode(false),
+              title: '退出阅读模式（Esc）',
+            }, h(Glyph, { name: 'close', size: 13 }), h('span', null, '退出阅读'))
+          : null,
 
         // 问 AI 侧栏：只在打开且文章可读时出现，作为阅读器的右侧补充栏。
         aiOpen && selected && selected.downloadStatus === 'ready' && content

@@ -200,4 +200,17 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('阅读状态三态 OK：未读 / 未读完 / 已读，滚动到底自动转已读');
 }
 
+// 阅读模式：进入后隐藏导航/列表/工具栏，只留正文，并提供退出途径。
+{
+  assert.ok(source.includes('const [focusMode, setFocusMode] = useState(false)'), '应有阅读模式状态');
+  assert.ok(cssText.includes('.xal-root.focus{grid-template-columns:minmax(0,1fr)}'), '阅读模式应切成单列');
+  assert.ok(cssText.includes('.xal-root.focus .xal-nav,.xal-root.focus .xal-list-col{display:none}'), '阅读模式应隐藏左栏与列表');
+  assert.ok(cssText.includes('.xal-root.focus .xal-tools'), '阅读模式应隐藏工具栏功能菜单');
+  assert.ok(source.includes("onClick: () => { setAiOpen(false); setFocusMode(true); }"), '进入阅读模式应收起 AI，避免挤掉正文');
+  assert.ok(source.includes("className: 'xal-focus-exit'"), '应有悬浮退出按钮');
+  assert.ok(source.includes("event.key === 'Escape'"), '应支持 Esc 退出');
+  assert.ok(source.includes('setFocusMode(false)') && /setFocusMode\(false\);[\s\S]{0,60}setAiOpen|setAiOpen\(false\);[\s\S]{0,80}setFocusMode\(false\)/.test(source), '换文章应退出阅读模式');
+  console.log('阅读模式 OK：单列沉浸、隐藏功能菜单、悬浮按钮 + Esc 双退出');
+}
+
 console.log('\n客户端模块测试全部通过。');
