@@ -1,4 +1,4 @@
-window.__ModuleLoader__.load({
+﻿window.__ModuleLoader__.load({
   id: '@menpengpeng/dsh-plugin-x-article-library',
   factory(require) {
     const React = require('react');
@@ -555,7 +555,7 @@ window.__ModuleLoader__.load({
       '.xal-root.focus .xal-nav,.xal-root.focus .xal-list-col{display:none}',
       '.xal-root.focus .xal-reader-body{padding:34px 6vw 90px}',
       '.xal-root.focus .xal-reader-inner{max-width:820px}',
-      '.xal-root.focus .xal-tools{opacity:0;height:0;overflow:hidden;margin:0;pointer-events:none}',
+      '.xal-root.focus .xal-tools{display:none}',
       // 悬浮退出按钮：只在阅读模式出现，固定在右上角。
       '.xal-focus-exit{position:absolute;top:14px;right:18px;z-index:30;display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:12px;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}',
       '.xal-focus-exit:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
@@ -610,10 +610,12 @@ window.__ModuleLoader__.load({
       '@keyframes xal-pulse{0%,100%{opacity:1}50%{opacity:.35}}',
       '.xal-reader-body{flex:1;overflow-y:auto;padding:18px 26px 60px}',
       '.xal-reader-inner{max-width:720px;margin:0 auto;font-size:var(--xal-reader-font-size,14px);position:relative}',
+      // 工具栏吸顶：滚动正文时功能按钮固定在阅读区顶部，背景遮住下方文字。
+      '.xal-tools{position:sticky;top:0;z-index:10;background:var(--dsw-alias-bg-base);padding:8px 0;border-bottom:1px solid var(--dsw-alias-border-l1)}',
       // 上次读到的位置：正文内一条红线，仅「未读完」时显示。
       '.xal-reading-mark{position:absolute;left:-8px;right:-8px;height:2px;background:var(--dsw-alias-state-error-primary);pointer-events:none;z-index:5}',
       '.xal-reading-mark::after{content:"上次读到这里";position:absolute;right:0;top:-10px;background:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-bg-base);font-size:10px;line-height:1.5;padding:1px 6px;border-radius:4px;white-space:nowrap}',
-      '.xal-reader h1.xal-title{font-size:1.5714em;line-height:1.35;margin:0 0 8px;font-weight:700;word-break:break-word}',
+      '.xal-reader h1.xal-title{font-size:1.5714em;line-height:1.35;margin:14px 0 8px;font-weight:700;word-break:break-word}',
       '.xal-reader-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
       '.xal-md{line-height:1.72;word-break:break-word}',
       '.xal-md p{margin:0 0 12px}',
@@ -1564,7 +1566,7 @@ window.__ModuleLoader__.load({
                   { className: 'xal-reader-inner', ref: innerRef },
                   h(
                     'div',
-                    { className: 'xal-tools', style: { display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' } },
+                    { className: 'xal-tools', style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
                     h('button', { className: 'xal-btn primary', onClick: () => { setAiOpen(false); setFocusMode(true); }, title: '进入阅读模式（Esc 退出）' }, h(Glyph, { name: 'book' }), h('span', null, '阅读模式')),
                     h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: '用 AI 总结这篇文章，可继续追问' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
