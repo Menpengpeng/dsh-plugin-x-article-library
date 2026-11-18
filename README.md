@@ -1,5 +1,7 @@
 ﻿# X 文章库（X Article Library）
 
+[简体中文](README.md) · [English](README_EN.md)
+
 DSH 桌面版插件。把公开的 X（Twitter）帖子与长文链接保存为可离线阅读的 Markdown，按收藏夹与博主归类，用三栏阅读器阅读。
 
 **不登录 X、不读取用户书签、不调用 X API。** 只处理用户主动粘贴的公开链接。
@@ -239,12 +241,9 @@ node --check lib/reveal.js
 node --check lib/assistant.js
 
 # 运行测试（无需安装依赖）
-node tests/reveal.test.mjs    # 存储位置切换 + 文件定位（含真实 Explorer 调用）
-node tests/menu.test.mjs      # 重命名 / 收藏夹调整 / Front Matter 同步
-node tests/assistant.test.mjs # 问 AI：提示词构造 / 截断 / 历史裁剪 / 流式消费
-node tests/markdown.test.mjs  # 渲染器安全与语法，48 项
-node tests/client.test.mjs    # 客户端模块加载、slot 注册、图标与右键菜单
-node tests/host.test.mjs      # Host 接口、认证、目录选择四分支、问 AI 降级
+npm test
+# 依次覆盖：文件定位 / 右键菜单 / 阅读三态 / 问 AI / Markdown 渲染 /
+#           字号持久化 / 客户端模块 / Host 接口 / 问 AI 端到端
 ```
 
 调试接口需要带 DSH 会话凭据，接口本身会拒绝未认证请求。想看日志可在 DSH 启动终端观察。
