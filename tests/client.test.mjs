@@ -1,4 +1,4 @@
-﻿// 客户端模块加载测试：用桩 __ModuleLoader__ / require / ctx 真实执行 client.js。
+// 客户端模块加载测试：用桩 __ModuleLoader__ / require / ctx 真实执行 client.js。
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -223,7 +223,9 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes('height * progress'), '红线位置应按阅读进度换算');
   assert.ok(source.includes("readState !== 'reading'"), '仅未读完时显示红线');
   assert.ok(source.includes('ResizeObserver'), '应跟随图片加载/字号变化重新测量位置');
-  console.log('上次读到红线 OK：仅未读完显示，按进度定位，随高度变化重算');
+  assert.ok(source.includes('autoScrolledRef'), '应只自动定位一次，避免反复跳动');
+  assert.ok(source.includes('scroller.scrollTop = target'), '打开未读完文章应自动滚到上次位置');
+  console.log('上次读到红线 OK：仅未读完显示，按进度定位，随高度变化重算，打开时自动定位');
 }
 
 console.log('\n客户端模块测试全部通过。');

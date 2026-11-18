@@ -1,4 +1,4 @@
-﻿window.__ModuleLoader__.load({
+window.__ModuleLoader__.load({
   id: '@menpengpeng/dsh-plugin-x-article-library',
   factory(require) {
     const React = require('react');
@@ -1027,8 +1027,11 @@
       const [fontSize, setFontSize] = useState(null);
       // 上次读到的位置（正文内像素偏移），由阅读进度换算，仅未读完时显示红线。
       const [markTop, setMarkTop] = useState(null);
+      const [markPercent, setMarkPercent] = useState(0);
       const readerRef = useRef(null);
       const innerRef = useRef(null);
+      // 每篇文章只自动定位一次，避免进度上报/尺寸变化反复把视图拉回红线。
+      const autoScrolledRef = useRef('');
 
       const load = useCallback(async () => {
         try {
@@ -1176,13 +1179,28 @@
       useEffect(() => {
         const inner = innerRef.current;
         if (!inner || !content || !selectedId) { setMarkTop(null); return undefined; }
-        const progress = Number(content.readingProgress) || 0;
-        const readState = (articles.find((item) => item.postId === selectedId) || {}).readState;
+        // 读 state 里的最新进度，而不是打开时的快照——否则滚动上报后红线数据不更新。
+        const current = articles.find((item) => item.postId === selectedId) || {};
+        const progress = Number(current.readingProgress) || 0;
+        const readState = current.readState;
         // 只有未读完才画线；已读/未读都不画。
         if (readState !== 'reading' || progress <= 0 || progress >= 1) { setMarkTop(null); return undefined; }
+        setMarkPercent(Math.round(progress * 100));
         const measure = () => {
           const height = inner.scrollHeight;
-          setMarkTop(Math.max(0, Math.min(height, height * progress)));
+          const top = Math.max(0, Math.min(height, height * progress));
+          setMarkTop(top);
+          // 打开未读完的文章时，自动滚到上次读到的位置，让红线就在眼前。
+          // 只在首次且内容并非本次滚动引起时执行一次。
+          if (autoScrolledRef.current !== selectedId) {
+            autoScrolledRef.current = selectedId;
+            const scroller = readerRef.current;
+            if (scroller && height > 0) {
+              // 红线落在视口偏上位置，方便接着往下读。
+              const target = Math.max(0, top - scroller.clientHeight * 0.3);
+              scroller.scrollTop = target;
+            }
+          }
         };
         measure();
         if (typeof ResizeObserver === 'undefined') return undefined;
@@ -1590,7 +1608,7 @@
                     ? h('div', {
                         className: 'xal-reading-mark',
                         style: { top: markTop + 'px' },
-                        title: '上次读到的位置（' + Math.round((Number(content.readingProgress) || 0) * 100) + '%）',
+                        title: '上次读到的位置（' + markPercent + '%）',
                       })
                     : null,
                 ),
