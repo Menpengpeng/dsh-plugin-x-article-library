@@ -587,6 +587,11 @@
       '.xal-item-excerpt{font-size:11.5px;color:var(--dsw-alias-label-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}',
       '.xal-item-meta{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:var(--dsw-alias-label-caption);flex-wrap:wrap}',
       '.xal-tag{padding:1px 6px;border-radius:4px;background:var(--dsw-alias-bg-layer-2);font-size:10.5px;color:var(--dsw-alias-label-secondary)}',
+      // 已读/未读标签：未读用品牌色强调，已读淡化，和标题同一行。
+      '.xal-readtag{flex:none;padding:1px 5px;border-radius:4px;font-size:10px;line-height:1.5;font-weight:500;white-space:nowrap}',
+      '.xal-readtag.unread{background:color-mix(in srgb,var(--dsw-alias-brand-primary) 16%,transparent);color:var(--dsw-alias-brand-primary)}',
+      '.xal-readtag.reading{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 16%,transparent);color:var(--dsw-alias-state-warn-primary)}',
+      '.xal-readtag.read{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-caption)}',
       '.xal-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--dsw-alias-border-l3)}',
       '.xal-dot.ok{background:var(--dsw-alias-state-success-primary)}',
       '.xal-dot.busy{background:var(--dsw-alias-state-warn-primary);animation:xal-pulse 1.2s ease-in-out infinite}',
@@ -1059,7 +1064,7 @@
         return articles.filter((item) => {
           if (view.kind === 'collection' && !(item.collectionIds || []).includes(view.value)) return false;
           if (view.kind === 'author' && (item.authorUsername || item.authorName) !== view.value) return false;
-          if (view.kind === 'unread' && item.readState !== 'unread') return false;
+          if (view.kind === 'unread' && !['unread', 'reading'].includes(item.readState || 'unread')) return false;
           if (view.kind === 'starred' && !item.starred) return false;
           if (view.kind === 'failed' && !['failed', 'blocked', 'missing'].includes(item.downloadStatus)) return false;
           if (!keyword) return true;
@@ -1078,8 +1083,12 @@
         // 换了文章就收起 AI 侧栏，避免还看着上一篇的总结。
         setAiOpen(false);
         try {
-          setContent(await call('read', { postId }));
-          await call('update', { postId, patch: { readState: 'read' } });
+          const data = await call('read', { postId });
+          setContent(data);
+          // 打开即视为「未读完」；只有真的滚到底才转成「已读」，保留原有进度。
+          const patch = { readState: 'reading' };
+          if (data && data.readingProgress) patch.readingProgress = data.readingProgress;
+          await call('update', { postId, patch });
         } catch (err) {
           setError(err.message);
         } finally {
@@ -1097,6 +1106,50 @@
       useEffect(() => {
         if (readerRef.current) readerRef.current.scrollTop = 0;
       }, [selectedId]);
+
+      // 滚动上报阅读进度：>=95% 视为读完，期间保持「未读完」。
+      // 用 lastSent 做节流，避免每帧都写盘；换文章时重置。
+      useEffect(() => {
+        const node = readerRef.current;
+        if (!node || !selectedId || !content) return undefined;
+        let lastSent = -1;
+        let timer = null;
+        const report = () => {
+          const max = node.scrollHeight - node.clientHeight;
+          // 内容短到无需滚动，直接算读完。
+          if (max <= 8) {
+            if (lastSent !== 1) {
+              lastSent = 1;
+              call('update', { postId: selectedId, patch: { readingProgress: 1, readState: 'read' } })
+                .then((result) => { if (result && result.state) setState(result.state); })
+                .catch(() => {});
+            }
+            return;
+          }
+          const ratio = Math.min(1, Math.max(0, node.scrollTop / max));
+          const finished = ratio >= 0.95;
+          const value = finished ? 1 : ratio;
+          // 读完只上报一次；未读完时进度变化超过 5% 才写。
+          if (finished && lastSent === 1) return;
+          if (!finished && lastSent >= 0 && Math.abs(value - lastSent) < 0.05) return;
+          lastSent = value;
+          call('update', {
+            postId: selectedId,
+            patch: { readingProgress: value, readState: finished ? 'read' : 'reading' },
+          }).then((result) => {
+            if (result && result.state) setState(result.state);
+          }).catch(() => {});
+        };
+        const onScroll = () => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(report, 250);
+        };
+        node.addEventListener('scroll', onScroll, { passive: true });
+        return () => {
+          if (timer) clearTimeout(timer);
+          node.removeEventListener('scroll', onScroll);
+        };
+      }, [selectedId, content]);
 
       const refresh = async (next) => {
         if (next) setState(next);
@@ -1402,6 +1455,10 @@
                     { className: 'xal-item-top' },
                     h(StatusDot, { status: item.downloadStatus }),
                     h('span', { className: 'xal-item-title' }, item.title || (item.downloadStatus === 'ready' ? '（无标题）' : '帖子 ' + item.postId)),
+                    h('span', {
+                      className: 'xal-readtag ' + (item.readState === 'read' ? 'read' : item.readState === 'reading' ? 'reading' : 'unread'),
+                      title: item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读',
+                    }, item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读'),
                     item.starred ? h('span', { style: { color: 'var(--dsw-alias-state-warn-primary)', display: 'inline-flex' }, title: '已收藏' }, h(Glyph, { name: 'star', size: 11 })) : null,
                   ),
                   item.excerpt ? h('div', { className: 'xal-item-excerpt' }, item.excerpt) : null,

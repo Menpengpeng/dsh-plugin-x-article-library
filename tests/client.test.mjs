@@ -183,4 +183,21 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('正文字号 OK：拖动滑杆 ' + min + '–' + max + 'px，默认 ' + preset + '，松手保存');
 }
 
+// 已读/未读完/未读三态标签：标题行要根据 readState 显示不同标签。
+{
+  assert.ok(cssText.includes('.xal-readtag'), '应有阅读状态标签样式');
+  assert.ok(cssText.includes('.xal-readtag.unread'), '应有未读样式');
+  assert.ok(cssText.includes('.xal-readtag.reading'), '应有未读完样式');
+  assert.ok(cssText.includes('.xal-readtag.read'), '应有已读样式');
+
+  // 标签的类名与文案都由 readState 决定，而非写死。
+  assert.ok(source.includes("item.readState === 'read' ? 'read' : item.readState === 'reading' ? 'reading' : 'unread'"), '标签类名应由 readState 三态决定');
+  assert.ok(source.includes("item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读'"), '标签文案应为已读/未读完/未读');
+  // 打开文章先标「未读完」，滚到底才转为「已读」。
+  assert.ok(source.includes("patch = { readState: 'reading' }"), '打开文章应标记为未读完');
+  assert.ok(source.includes("readState: finished ? 'read' : 'reading'"), '读到底应转为已读');
+  assert.ok(source.includes('readingProgress'), '应上报阅读进度');
+  console.log('阅读状态三态 OK：未读 / 未读完 / 已读，滚动到底自动转已读');
+}
+
 console.log('\n客户端模块测试全部通过。');
