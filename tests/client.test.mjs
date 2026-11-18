@@ -151,4 +151,36 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('右键菜单 OK：文章卡片 + 收藏夹两个入口，动作齐全');
 }
 
+// 正文字号：工具栏要有可拖动的滑杆，且字号必须真的传导到正文样式上。
+{
+  assert.ok(/className: 'xal-fontctl'/.test(source), '阅读器工具栏应有字号控件');
+  assert.ok(/type: 'range'/.test(source), '字号控件应是拖动滑杆，不是只能点的按钮');
+  assert.ok(source.includes("'aria-label': '正文字号'"), '滑杆要有无障碍标签');
+
+  // 范围要落在合理区间，且默认值与 CSS 兜底一致。
+  const min = Number((source.match(/const FONT_MIN = (\d+);/) || [])[1]);
+  const max = Number((source.match(/const FONT_MAX = (\d+);/) || [])[1]);
+  const preset = Number((source.match(/const FONT_DEFAULT = (\d+);/) || [])[1]);
+  assert.ok(min >= 10 && min <= 14, '最小字号应在 10–14px，实际 ' + min);
+  assert.ok(max >= 20 && max <= 30, '最大字号应在 20–30px，实际 ' + max);
+  assert.ok(preset > min && preset <= max, '默认字号应落在区间内，实际 ' + preset);
+
+  // 字号通过 CSS 变量下发，正文与标题都跟着走；CSS 兜底值要和 FONT_DEFAULT 一致。
+  assert.ok(source.includes("'--xal-reader-font-size': activeFont + 'px'"), '应把字号写成 CSS 变量');
+  assert.ok(cssText.includes('--xal-reader-font-size'), '样式应引用字号变量');
+  const fallback = (cssText.match(/var\(--xal-reader-font-size,(\d+)px\)/) || [])[1];
+  assert.equal(Number(fallback), preset, 'CSS 兜底字号应与 FONT_DEFAULT 一致');
+  assert.ok(/\.xal-md\{[^}]*line-height:1\.72/.test(cssText), '正文行高不应被字号改动带偏');
+
+  // 标题用 em 相对单位，这样放大字号时标题会同比放大，不会反而更小。
+  assert.ok(/\.xal-md h1\{font-size:1\.4286em\}/.test(source), '正文标题应使用 em 相对单位');
+  assert.ok(!/\.xal-md h[1-6][^{]*\{font-size:\d+px/.test(cssText), '正文标题不应再写死 px');
+
+  // 拖动过程中只更新本地状态，松手才落盘。
+  assert.ok(/onMouseUp: \(\) => \{ if \(fontSize !== null\) saveFont\(fontSize\); \}/.test(source), '松手才保存字号');
+  assert.ok(/onChange: \(event\) => setFontSize\(clampFont\(event\.target\.value\)\)/.test(source), '拖动时只改本地状态');
+  assert.ok(source.includes('readerFontScale'), '字号应持久化到 readerFontScale');
+  console.log('正文字号 OK：拖动滑杆 ' + min + '–' + max + 'px，默认 ' + preset + '，松手保存');
+}
+
 console.log('\n客户端模块测试全部通过。');

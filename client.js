@@ -261,6 +261,9 @@
       author: 'M12 12.4a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.8 20.4a7.2 7.2 0 0 1 14.4 0',
       spark: 'M12 3.8l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8zM18.6 15.4l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
       send: 'M4.6 12l14.8-7.4-4.2 14.8-3.9-6.1zM15.2 19.4l-3.9-6.1',
+      // 字号：大 A 小 A，用于正文字号控件两端。
+      fontLarger: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M14.6 19l2.9-8.2L20.4 19M15.5 16.6h3.9',
+      fontSmaller: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M20.4 15.2h-5.2',
     };
 
     /** 渲染一个线性图标。size 默认 14。 */
@@ -590,13 +593,13 @@
       '.xal-dot.error{background:var(--dsw-alias-state-error-primary)}',
       '@keyframes xal-pulse{0%,100%{opacity:1}50%{opacity:.35}}',
       '.xal-reader-body{flex:1;overflow-y:auto;padding:18px 26px 60px}',
-      '.xal-reader-inner{max-width:720px;margin:0 auto}',
-      '.xal-reader h1.xal-title{font-size:22px;line-height:1.35;margin:0 0 8px;font-weight:700;word-break:break-word}',
+      '.xal-reader-inner{max-width:720px;margin:0 auto;font-size:var(--xal-reader-font-size,14px)}',
+      '.xal-reader h1.xal-title{font-size:1.5714em;line-height:1.35;margin:0 0 8px;font-weight:700;word-break:break-word}',
       '.xal-reader-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
-      '.xal-md{line-height:1.72;font-size:14px;word-break:break-word}',
+      '.xal-md{line-height:1.72;word-break:break-word}',
       '.xal-md p{margin:0 0 12px}',
       '.xal-md h1,.xal-md h2,.xal-md h3,.xal-md h4,.xal-md h5,.xal-md h6{margin:22px 0 10px;line-height:1.35;font-weight:650}',
-      '.xal-md h1{font-size:20px}.xal-md h2{font-size:18px}.xal-md h3{font-size:16px}.xal-md h4{font-size:15px}.xal-md h5,.xal-md h6{font-size:14px;color:var(--dsw-alias-label-secondary)}',
+      '.xal-md h1{font-size:1.4286em}.xal-md h2{font-size:1.2857em}.xal-md h3{font-size:1.1429em}.xal-md h4{font-size:1.0714em}.xal-md h5,.xal-md h6{font-size:1em;color:var(--dsw-alias-label-secondary)}',
       '.xal-md a{color:var(--dsw-alias-brand-primary);text-decoration:none}',
       '.xal-md a:hover{text-decoration:underline}',
       '.xal-md ul,.xal-md ol{margin:0 0 12px;padding-left:22px}',
@@ -604,15 +607,20 @@
       '.xal-md blockquote{margin:0 0 12px;padding:6px 14px;border-left:3px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-1);border-radius:0 6px 6px 0}',
       '.xal-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--dsw-alias-bg-layer-2);padding:1px 5px;border-radius:4px}',
       '.xal-md pre.xal-code{margin:0 0 14px;padding:12px 14px;border-radius:8px;background:var(--dsw-alias-bg-layer-2);overflow-x:auto;border:1px solid var(--dsw-alias-border-l1)}',
-      '.xal-md pre.xal-code code{background:none;padding:0;font-size:12.5px;line-height:1.55}',
+      '.xal-md pre.xal-code code{background:none;padding:0;font-size:.8929em;line-height:1.55}',
       '.xal-md hr{border:0;border-top:1px solid var(--dsw-alias-border-l1);margin:20px 0}',
       '.xal-md .xal-figure{margin:0 0 16px;text-align:center}',
       '.xal-md .xal-figure img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1)}',
       '.xal-md .xal-figure figcaption{font-size:11.5px;color:var(--dsw-alias-label-caption);margin-top:6px}',
       '.xal-md .xal-table-wrap{margin:0 0 14px;overflow-x:auto}',
-      '.xal-md table{border-collapse:collapse;font-size:12.5px;min-width:100%}',
+      '.xal-md table{border-collapse:collapse;font-size:.8929em;min-width:100%}',
       '.xal-md th,.xal-md td{border:1px solid var(--dsw-alias-border-l1);padding:6px 10px;text-align:left}',
       '.xal-md th{background:var(--dsw-alias-bg-layer-2);font-weight:600}',
+      // 正文字号控件：拖动即时生效，松手保存。
+      '.xal-fontctl{display:flex;align-items:center;gap:6px;padding:0 8px;height:26px;border:1px solid var(--dsw-alias-border-l1);border-radius:7px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);box-sizing:border-box}',
+      '.xal-fontctl span.xal-fontval{font-size:11px;min-width:30px;text-align:center;font-variant-numeric:tabular-nums}',
+      '.xal-fontctl input[type=range]{width:74px;margin:0;accent-color:var(--dsw-alias-brand-primary);cursor:pointer}',
+      '.xal-fontctl input[type=range]:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}',
       '.xal-empty{display:grid;place-items:center;gap:10px;height:100%;color:var(--dsw-alias-label-secondary);font-size:13px;text-align:center;padding:30px;box-sizing:border-box}',
       '.xal-empty b{font-size:15px;color:var(--dsw-alias-label-primary)}',
       '.xal-banner{margin:10px 12px;padding:8px 10px;border-radius:7px;font-size:12px;line-height:1.5;background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent);color:var(--dsw-alias-state-error-primary);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary) 30%,transparent)}',
@@ -994,6 +1002,8 @@
       const [prompt, setPrompt] = useState(null);
       const [picker, setPicker] = useState(null);
       const [aiOpen, setAiOpen] = useState(false);
+      // 正文字号：先本地即时反馈，松手才写回设置，避免拖动时频繁落盘。
+      const [fontSize, setFontSize] = useState(null);
       const readerRef = useRef(null);
 
       const load = useCallback(async () => {
@@ -1024,6 +1034,25 @@
       const articles = (state && state.articles) || [];
       const collections = (state && state.collections) || [];
       const stats = (state && state.stats) || { total: 0, unread: 0, starred: 0, failed: 0, authors: [] };
+
+      // 字号范围与默认值：14px 是设计基准，12–22px 覆盖从密排到易读。
+      const FONT_MIN = 12;
+      const FONT_MAX = 22;
+      const FONT_DEFAULT = 14;
+      const clampFont = (value) => Math.min(FONT_MAX, Math.max(FONT_MIN, Math.round(Number(value) || FONT_DEFAULT)));
+      // 已保存的缩放比例（服务端存 readerFontScale，1 = 14px）。
+      const savedFont = clampFont((Number(state && state.settings && state.settings.readerFontScale) || 1) * FONT_DEFAULT);
+      const activeFont = fontSize === null ? savedFont : fontSize;
+
+      const saveFont = useCallback(async (value) => {
+        const next = clampFont(value);
+        try {
+          const result = await call('settings', { patch: { readerFontScale: next / FONT_DEFAULT } });
+          if (result && result.state) setState(result.state);
+        } catch (err) {
+          setError(err.message);
+        }
+      }, []);
 
       const filtered = useMemo(() => {
         const keyword = query.trim().toLowerCase();
@@ -1404,7 +1433,7 @@
           selected && selected.downloadStatus === 'ready' && content
             ? h(
                 'div',
-                { className: 'xal-reader-body' },
+                { className: 'xal-reader-body', style: { '--xal-reader-font-size': activeFont + 'px' } },
                 h(
                   'div',
                   { className: 'xal-reader-inner' },
@@ -1415,6 +1444,25 @@
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
                       h(Glyph, { name: 'star' }),
                       h('span', null, selected.starred ? '已收藏' : '收藏')),
+                    // 字号调节：拖动即时生效，松手写回设置。
+                    h(
+                      'div',
+                      { className: 'xal-fontctl', title: '拖动调整正文字号（' + FONT_MIN + '–' + FONT_MAX + 'px）' },
+                      h(Glyph, { name: 'fontSmaller', size: 12 }),
+                      h('input', {
+                        type: 'range',
+                        min: FONT_MIN,
+                        max: FONT_MAX,
+                        step: 1,
+                        value: activeFont,
+                        'aria-label': '正文字号',
+                        onChange: (event) => setFontSize(clampFont(event.target.value)),
+                        onMouseUp: () => { if (fontSize !== null) saveFont(fontSize); },
+                        onTouchEnd: () => { if (fontSize !== null) saveFont(fontSize); },
+                        onKeyUp: () => { if (fontSize !== null) saveFont(fontSize); },
+                      }),
+                      h('span', { className: 'xal-fontval' }, activeFont + 'px'),
+                    ),
                     h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: '在资源管理器中显示该文件' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开所在位置')),
                     h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, '打开原帖')),
                     h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: '只移除索引，保留磁盘文件' }, h(Glyph, { name: 'close' }), h('span', null, '从库中移除')),
