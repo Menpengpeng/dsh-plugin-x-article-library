@@ -173,6 +173,17 @@ export function apply(ctx, config = {}) {
       await ready;
       return service.readContent(String(input.postId || ''));
     },
+    /** 划线/评论：把选中文字写回 article.md。 */
+    async annotate(input) {
+      await ready;
+      const result = await service.annotate({
+        postId: input.postId,
+        text: input.text,
+        occurrence: input.occurrence,
+        comment: input.comment,
+      });
+      return { ...result, state: snapshot() };
+    },
     async update(input) {
       await ready;
       const item = await service.updateArticle(String(input.postId || ''), input.patch || {});

@@ -25,6 +25,8 @@ Left: library navigation (All / Unread / Starred / Collections / Authors). Middl
 - **Three reading states**: each list item carries an Unread / Reading / Read badge. Opening an article marks it Reading; it becomes Read once you scroll to the end. The Unread filter includes in-progress articles.
 - **Focus mode**: click "Focus mode" to hide both sidebars and all toolbar actions, leaving only the text for immersive reading. Exit with the floating button or `Esc`.
 - **Sticky toolbar**: the toolbar stays pinned to the top of the reading area while you scroll.
+- **Highlights & comments**: select text in the body to reveal a small toolbar—highlight it or add a comment. Marks are written into `article.md` and shown as highlights with a hoverable comment bubble.
+- **Bilingual UI**: switch the entire interface between Chinese and English in Settings; the choice is remembered.
 - **AI tool**: registers an `x_article_library` tool so an agent can add links, list articles and read content in a conversation.
 
 ## Installation
@@ -119,6 +121,19 @@ Click "Focus mode" in the toolbar for immersive reading:
 - Hides the left navigation, article list and every toolbar action, leaving only centered body text on a wider column.
 - Automatically closes the "Ask AI" sidebar on entry so it can't crowd the text.
 - A floating "Exit focus" button sits in the top-right, or press `Esc`; switching articles exits automatically.
+
+### Highlights & comments
+
+Select a passage in the body and a small toolbar appears:
+
+- **Highlight**: mark the text with a yellow highlight and underline.
+- **Comment**: type a note; the highlight gains a small bubble marker, and hovering shows your comment.
+
+Marks are written directly into that article's `article.md` (`==highlight==` syntax, with comments stored as base64 in an adjacent HTML comment)—no separate file and no dependency on the plugin's index. Copy the Markdown elsewhere and your highlights and comments go with it. When the same text appears multiple times, an occurrence index locates the exact one.
+
+### Interface language
+
+The **Language** option in Settings switches between **Chinese / English**. The whole interface updates immediately and your choice is remembered.
 
 ## Ask AI
 

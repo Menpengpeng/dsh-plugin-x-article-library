@@ -7,6 +7,175 @@
 
     const API = '/api/x-article-library';
 
+    // ===== 界面语言 =====
+    // 所有用户可见文案都走 t()。默认中文，设置里可切英文。
+    const I18N = {
+      zh: {},
+      en: {
+        '请求失败（HTTP {n}）': 'Request failed (HTTP {n})',
+        '刚刚': 'Just now',
+        '{n} 分钟前': '{n} min ago',
+        '{n} 小时前': '{n} h ago',
+        '{n} 天前': '{n} d ago',
+        '已就绪': 'Ready',
+        '下载中': 'Downloading',
+        '排队中': 'Queued',
+        '失败': 'Failed',
+        '不可访问': 'Inaccessible',
+        '文件缺失': 'File missing',
+        '未知': 'Unknown',
+        '调整所属收藏夹': 'Move to Collection',
+        '帖子 {n}': 'Post {n}',
+        '还没有收藏夹，先在左栏建一个。': 'No collections yet. Create one in the left panel first.',
+        '取消': 'Cancel',
+        '保存中…': 'Saving…',
+        '保存': 'Save',
+        '问 AI': 'Ask AI',
+        '当前使用的模型': 'Current model',
+        '关闭': 'Close',
+        '正在读这篇文章…': 'Reading this article…',
+        '还没有内容': 'No content yet',
+        '思考中…': 'Thinking…',
+        '就这篇文章提问…': 'Ask about this article…',
+        '发送': 'Send',
+        '不能为空': 'Cannot be empty',
+        '没有可导入的链接，请检查地址是否为公开帖子': 'No importable links. Please check that the URLs point to public posts.',
+        '添加 X 文章': 'Add X Article',
+        '粘贴公开的 X 帖子或长文链接，支持一次多条。只支持公开内容；私密、受保护或已删除的帖子无法下载。': 'Paste public X post or long-form article links; multiple links are supported. Only public content is supported; private, protected, or deleted posts cannot be downloaded.',
+        '链接': 'Links',
+        '已识别 {n} 个帖子': 'Detected {n} post(s)',
+        '内容范围': 'Content range',
+        '包含作者自线程（长文完整）': "Include author's own thread (full long-form post)",
+        '只取单条帖子': 'Single post only',
+        '重复链接': 'Duplicate links',
+        '跳过已存在的': 'Skip existing',
+        '重新下载并覆盖': 'Redownload and overwrite',
+        '归入收藏夹': 'Add to collection',
+        '不归类': 'Uncategorized',
+        '标签（可选，空格或逗号分隔）': 'Tags (optional, separated by spaces or commas)',
+        '如 设计 长文': 'e.g. design longform',
+        '新增 {created} 篇，跳过 {skipped} 篇': 'Added {created}, skipped {skipped}',
+        '，无法识别 {invalid} 条': ', {invalid} unrecognized',
+        '。下载在后台进行，完成后会自动出现在列表中。': '. Downloads run in the background and appear in the list when finished.',
+        '导入中…': 'Importing…',
+        '开始导入': 'Start Import',
+        '设置': 'Settings',
+        '文章以 Markdown 保存在你选定的目录下，每篇文章一个文件夹，包含 article.md、metadata.json 与本地图片。分类信息只存在索引里，改变分类不会移动文件。': 'Articles are saved as Markdown in your chosen folder, one folder per article containing article.md, metadata.json, and local images. Collection info lives only in the index; changing collections does not move files.',
+        '存储位置': 'Storage location',
+        '打开系统文件夹选择框': 'Open system folder picker',
+        '选择中…': 'Selecting…',
+        '浏览…': 'Browse…',
+        '在系统资源管理器中打开该目录': 'Open this folder in File Explorer',
+        '打开': 'Open',
+        '默认：{n}': 'Default: {n}',
+        '点「浏览…」会弹出系统文件夹选择框；若当前环境没有桌面显示，会自动退回应用内目录列表。已经是相对路径的写法会被拒绝。': 'Clicking "Browse…" opens the system folder picker; if no desktop is available, it falls back to the in-app folder list. Relative paths are not accepted.',
+        '收起': 'Collapse',
+        '上级目录': 'Parent folder',
+        '这个目录下没有子目录': 'No subfolders in this directory',
+        '使用这个目录': 'Use this folder',
+        '同时下载数': 'Concurrent downloads',
+        '1（最稳）': '1 (most stable)',
+        '2（推荐）': '2 (recommended)',
+        '4（最快）': '4 (fastest)',
+        '图片': 'Images',
+        '下载到本地（离线可看）': 'Download locally (view offline)',
+        '保留远程链接': 'Keep remote links',
+        '维护': 'Maintenance',
+        '扫描中…': 'Scanning…',
+        '扫描存储目录': 'Scan storage folder',
+        '用于找回被手工放进目录的文章': 'Use this to recover articles manually placed in the folder',
+        '保存设置': 'Save Settings',
+        '重命名标题…': 'Rename title…',
+        '重命名文章': 'Rename article',
+        '标题': 'Title',
+        '取消收藏': 'Unstar',
+        '加入收藏': 'Star',
+        '调整所属收藏夹…': 'Move to Collection…',
+        '打开所在位置': 'Open file location',
+        '从库中移除': 'Remove from library',
+        '删除含文件': 'Delete including files',
+        '重命名收藏夹…': 'Rename collection…',
+        '重命名收藏夹': 'Rename collection',
+        '名称': 'Name',
+        '删除收藏夹': 'Delete collection',
+        '正在载入文章库…': 'Loading library…',
+        '文章库暂不可用': 'Library unavailable',
+        '未知错误': 'Unknown error',
+        '全部文章': 'All Articles',
+        '未读': 'Unread',
+        '收藏': 'Starred',
+        '收藏按钮': 'Star',
+        '作者': 'Author',
+        '需要处理': 'Needs Attention',
+        '收藏夹': 'Collections',
+        '资料库': 'Library',
+        '博主': 'Authors',
+        '创建': 'Create',
+        '收藏夹名称': 'Collection name',
+        '新建收藏夹': 'New Collection',
+        '添加 X 链接': 'Add X link',
+        '添加': 'Add',
+        '搜索标题、作者、标签…': 'Search titles, authors, tags…',
+        '重试所有失败的下载': 'Retry all failed downloads',
+        '重试': 'Retry',
+        '（无标题）': '(Untitled)',
+        '已读': 'Read',
+        '未读完': 'Partially read',
+        '已收藏': 'Starred',
+        '未知作者': 'Unknown author',
+        '图 {n}': '{n} img',
+        '没有匹配的文章': 'No matching articles',
+        '还没有文章': 'No articles yet',
+        '换个关键词或分类试试': 'Try a different keyword or collection',
+        '点击上方「+ 添加」，粘贴公开的 X 链接': 'Click "+ Add" above and paste a public X link',
+        '进入阅读模式（Esc 退出）': 'Enter reading mode (Esc to exit)',
+        '阅读模式': 'Reading Mode',
+        '用 AI 总结这篇文章，可继续追问': 'Summarize this article with AI and keep asking follow-ups',
+        '在资源管理器中显示该文件': 'Show this file in File Explorer',
+        '打开原帖': 'Open original post',
+        '只移除索引，保留磁盘文件': 'Remove from index only, keep files on disk',
+        '同时删除磁盘上的文件': 'Also delete files on disk',
+        '{n} 张图片': '{n} image(s)',
+        '上次读到的位置（{n}%）': 'Last read position ({n}%)',
+        '正在读取…': 'Loading…',
+        ' 正在读取…': ' Loading…',
+        '正在下载，稍候会自动出现': 'Downloading; it will appear automatically when done',
+        '这篇文章还没有可读内容': 'This article has no readable content yet',
+        '重新下载': 'Redownload',
+        '选择一篇开始阅读': 'Select an article to start reading',
+        'X 文章库': 'X Article Library',
+        '在左侧选一篇已下载的文章，正文会显示在这里。': 'Select a downloaded article on the left; its content will appear here.',
+        '把公开的 X 帖子或长文链接贴进来，会自动转成可离线阅读的 Markdown，并按收藏夹和博主归类。': 'Paste public X posts or long-form links; they are converted to offline-readable Markdown and organized by collection and author.',
+        '添加链接': 'Add Links',
+        '在资源管理器中打开存储目录': 'Open storage folder in File Explorer',
+        '打开存储目录': 'Open Storage Folder',
+        '退出阅读模式（Esc）': 'Exit reading mode (Esc)',
+        '退出阅读': 'Exit Reading',
+        '拖动调整正文字号（{min}–{max}px）': 'Drag to adjust font size ({min}–{max}px)',
+        '正文字号': 'Font size',
+        'X 文章': 'X Article',
+        '语言': 'Language',
+        '中文': 'Chinese',
+        'English': 'English',
+        '划线': 'Highlight',
+        '评论': 'Comment',
+        '写评论': 'Write a comment',
+      },
+    };
+    let currentLang = 'zh';
+    function setLang(lang) { currentLang = lang === 'en' ? 'en' : 'zh'; }
+    // t('中文原文', { n: 3 })：查英文映射，支持 {name} 占位符；中文原样返回。
+    function t(zh, vars) {
+      if (currentLang === 'en') {
+        const en = I18N.en[zh];
+        if (en) {
+          return vars ? en.replace(/\{(\w+)\}/g, (m, key) => (vars[key] === undefined ? m : String(vars[key]))) : en;
+        }
+      }
+      // 中文也支持占位符替换，保持两边行为一致。
+      return vars ? String(zh).replace(/\{(\w+)\}/g, (m, key) => (vars[key] === undefined ? m : String(vars[key]))) : zh;
+    }
+
     // ===== 受限 Markdown 渲染 =====
     // 只支持常用语法，禁原生 HTML、内联脚本与危险链接；外部内容一律当不可信数据。
     const SAFE_PROTOCOLS = ['http:', 'https:', 'mailto:'];
@@ -38,7 +207,28 @@
     }
 
     function renderInline(text) {
-      let out = escapeHtml(text);
+      // 先抽出划线标记（含可选评论），用占位符保护，避免后续转义把它们改掉。
+      const marks = [];
+      let work = String(text == null ? '' : text).replace(/==([^=]+)==(?:<!--c:([A-Za-z0-9+/=]+)-->)?/g, (whole, body, encoded) => {
+        let comment = '';
+        if (encoded) {
+          try { comment = decodeURIComponent(escape(atob(encoded))); } catch { comment = ''; }
+        }
+        const idx = marks.length;
+        marks.push({ body, comment });
+        return '\u0000M' + idx + '\u0000';
+      });
+      let out = escapeHtml(work);
+      // 还原划线（对 body 再做一次 inline 渲染，支持里面再加粗等）。
+      out = out.replace(/\u0000M(\d+)\u0000/g, (whole, idx) => {
+        const mark = marks[Number(idx)];
+        if (!mark) return '';
+        const inner = renderInline(mark.body);
+        if (mark.comment) {
+          return '<mark class="xal-mark" title="' + escapeHtml(mark.comment) + '" data-comment="' + escapeHtml(mark.comment) + '">' + inner + '<sup class="xal-mark-note">💬</sup></mark>';
+        }
+        return '<mark class="xal-mark">' + inner + '</mark>';
+      });
       out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
       out = out.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
       out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -187,7 +377,7 @@
       } catch {
         data = {};
       }
-      if (!response.ok) throw new Error(data.error || '请求失败（HTTP ' + response.status + '）');
+      if (!response.ok) throw new Error(data.error || t('请求失败（HTTP {n}）', { n: response.status }));
       return data;
     }
 
@@ -202,23 +392,23 @@
       if (!value) return '';
       const diff = Date.now() - new Date(value).getTime();
       if (Number.isNaN(diff)) return '';
-      if (diff < 60000) return '刚刚';
-      if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
-      if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
-      if (diff < 2592000000) return Math.floor(diff / 86400000) + ' 天前';
+      if (diff < 60000) return t('刚刚');
+      if (diff < 3600000) return t('{n} 分钟前', { n: Math.floor(diff / 60000) });
+      if (diff < 86400000) return t('{n} 小时前', { n: Math.floor(diff / 3600000) });
+      if (diff < 2592000000) return t('{n} 天前', { n: Math.floor(diff / 86400000) });
       return formatDate(value);
     }
 
     function StatusDot({ status }) {
       const map = {
-        ready: ['已就绪', 'ok'],
-        downloading: ['下载中', 'busy'],
-        queued: ['排队中', 'busy'],
-        failed: ['失败', 'error'],
-        blocked: ['不可访问', 'error'],
-        missing: ['文件缺失', 'error'],
+        ready: [t('已就绪'), 'ok'],
+        downloading: [t('下载中'), 'busy'],
+        queued: [t('排队中'), 'busy'],
+        failed: [t('失败'), 'error'],
+        blocked: [t('不可访问'), 'error'],
+        missing: [t('文件缺失'), 'error'],
       };
-      const entry = map[status] || ['未知', ''];
+      const entry = map[status] || [t('未知'), ''];
       return h('span', { className: 'xal-dot ' + entry[1], title: entry[0] });
     }
 
@@ -363,8 +553,8 @@
         h(
           'div',
           { className: 'xal-dialog', style: { maxWidth: 440 } },
-          h('h2', null, '调整所属收藏夹'),
-          h('div', { className: 'xal-hint', style: { marginBottom: 10 } }, article.title || '帖子 ' + article.postId),
+          h('h2', null, t('调整所属收藏夹')),
+          h('div', { className: 'xal-hint', style: { marginBottom: 10 } }, article.title || t('帖子 {n}', { n: article.postId })),
           collections.length
             ? h('div', { className: 'xal-picker-list' },
                 ...collections.map((collection) => {
@@ -381,11 +571,11 @@
                     h('span', null, collection.name),
                   );
                 }))
-            : h('div', { className: 'xal-hint' }, '还没有收藏夹，先在左栏建一个。'),
+            : h('div', { className: 'xal-hint' }, t('还没有收藏夹，先在左栏建一个。')),
           error ? h('div', { className: 'xal-banner' }, error) : null,
           h('div', { className: 'xal-row', style: { justifyContent: 'flex-end', marginTop: 14 } },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
-            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存'))),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, t('取消'))),
+            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? t('保存中…') : t('保存')))),
         ),
       );
     }
@@ -455,9 +645,9 @@
         h(
           'div',
           { className: 'xal-ai-head' },
-          h('span', { className: 'xal-ai-title' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
-          info?.model ? h('span', { className: 'xal-ai-model', title: '当前使用的模型' }, info.model) : null,
-          h('button', { className: 'xal-icon-btn', onClick: onClose, title: '关闭' }, h(Glyph, { name: 'close' })),
+          h('span', { className: 'xal-ai-title' }, h(Glyph, { name: 'spark' }), h('span', null, t('问 AI'))),
+          info?.model ? h('span', { className: 'xal-ai-model', title: t('当前使用的模型') }, info.model) : null,
+          h('button', { className: 'xal-icon-btn', onClick: onClose, title: t('关闭') }, h(Glyph, { name: 'close' })),
         ),
         h(
           'div',
@@ -471,9 +661,9 @@
                   : h('div', { className: 'xal-ai-plain' }, message.content),
               ))
             : busy
-              ? h('div', { className: 'xal-ai-hint' }, '正在读这篇文章…')
-              : h('div', { className: 'xal-ai-hint' }, '还没有内容'),
-          busy && messages.length ? h('div', { className: 'xal-ai-hint' }, '思考中…') : null,
+              ? h('div', { className: 'xal-ai-hint' }, t('正在读这篇文章…'))
+              : h('div', { className: 'xal-ai-hint' }, t('还没有内容')),
+          busy && messages.length ? h('div', { className: 'xal-ai-hint' }, t('思考中…')) : null,
           localError ? h('div', { className: 'xal-banner' }, localError) : null,
         ),
         h(
@@ -482,7 +672,7 @@
           h('input', {
             className: 'xal-input',
             value: input,
-            placeholder: '就这篇文章提问…',
+            placeholder: t('就这篇文章提问…'),
             disabled: busy,
             spellCheck: false,
             onChange: (event) => setInput(event.target.value),
@@ -490,7 +680,7 @@
           }),
           h('button', { className: 'xal-btn primary', onClick: submit, disabled: busy || !input.trim() },
             h(Glyph, { name: busy ? 'refresh' : 'send' }),
-            h('span', null, busy ? '…' : '发送')),
+            h('span', null, busy ? '…' : t('发送'))),
         ),
       );
     }
@@ -503,7 +693,7 @@
 
       async function submit() {
         const next = text.trim();
-        if (!next) { setError('不能为空'); return; }
+        if (!next) { setError(t('不能为空')); return; }
         if (next === value) { onClose(); return; }
         setBusy(true);
         try {
@@ -539,8 +729,8 @@
             })),
           error ? h('div', { className: 'xal-banner' }, error) : null,
           h('div', { className: 'xal-row', style: { justifyContent: 'flex-end', marginTop: 14 } },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
-            h('button', { className: 'xal-btn primary', onClick: submit, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存'))),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, t('取消'))),
+            h('button', { className: 'xal-btn primary', onClick: submit, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? t('保存中…') : t('保存')))),
         ),
       );
     }
@@ -618,6 +808,11 @@
       '.xal-reader h1.xal-title{font-size:1.5714em;line-height:1.35;margin:14px 0 8px;font-weight:700;word-break:break-word}',
       '.xal-reader-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
       '.xal-md{line-height:1.72;word-break:break-word}',
+      // 划线与评论：黄底高亮，带评论的右上角显示小气泡。
+      '.xal-md mark.xal-mark{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 30%,transparent);color:inherit;border-bottom:2px solid var(--dsw-alias-state-warn-primary);border-radius:2px;cursor:help}',
+      '.xal-md .xal-mark-note{font-size:9px;margin-left:2px;vertical-align:super}',
+      // 选中文字后浮出的划线/评论工具条。
+      '.xal-selbar{position:fixed;z-index:90;transform:translateX(-50%);display:flex;gap:5px;align-items:center;padding:5px;border:1px solid var(--dsw-alias-border-l2);border-radius:9px;background:var(--dsw-alias-bg-layer-1);box-shadow:0 8px 24px rgba(0,0,0,.3)}',
       '.xal-md p{margin:0 0 12px}',
       '.xal-md h1,.xal-md h2,.xal-md h3,.xal-md h4,.xal-md h5,.xal-md h6{margin:22px 0 10px;line-height:1.35;font-weight:650}',
       '.xal-md h1{font-size:1.4286em}.xal-md h2{font-size:1.2857em}.xal-md h3{font-size:1.1429em}.xal-md h4{font-size:1.0714em}.xal-md h5,.xal-md h6{font-size:1em;color:var(--dsw-alias-label-secondary)}',
@@ -735,7 +930,7 @@
           });
           setReport({ created: result.created.length, skipped: result.skipped.length, invalid: result.invalid.length });
           onDone(result.state);
-          if (!result.created.length && !result.skipped.length) onError('没有可导入的链接，请检查地址是否为公开帖子');
+          if (!result.created.length && !result.skipped.length) onError(t('没有可导入的链接，请检查地址是否为公开帖子'));
         } catch (error) {
           onError(error.message);
         } finally {
@@ -749,20 +944,20 @@
         h(
           'div',
           { className: 'xal-dialog' },
-          h('h2', null, '添加 X 文章'),
-          h('p', { className: 'xal-hint' }, '粘贴公开的 X 帖子或长文链接，支持一次多条。只支持公开内容；私密、受保护或已删除的帖子无法下载。'),
+          h('h2', null, t('添加 X 文章')),
+          h('p', { className: 'xal-hint' }, t('粘贴公开的 X 帖子或长文链接，支持一次多条。只支持公开内容；私密、受保护或已删除的帖子无法下载。')),
           h(
             'div',
             { className: 'xal-field' },
-            h('label', null, '链接'),
+            h('label', null, t('链接')),
             h('textarea', {
               className: 'xal-input',
               value: links,
-              placeholder: 'https://x.com/username/status/1234567890123456789\n每行一个，或直接粘贴多条',
+              placeholder: t('https://x.com/username/status/1234567890123456789\n每行一个，或直接粘贴多条'),
               onChange: (event) => setLinks(event.target.value),
               spellCheck: false,
             }),
-            detected.length ? h('div', { className: 'xal-hint' }, '已识别 ' + detected.length + ' 个帖子') : null,
+            detected.length ? h('div', { className: 'xal-hint' }, t('已识别 {n} 个帖子', { n: detected.length })) : null,
           ),
           h(
             'div',
@@ -770,23 +965,23 @@
             h(
               'div',
               { className: 'xal-field xal-grow' },
-              h('label', null, '内容范围'),
+              h('label', null, t('内容范围')),
               h(
                 'select',
                 { className: 'xal-input', value: threadMode, onChange: (event) => setThreadMode(event.target.value) },
-                h('option', { value: 'full' }, '包含作者自线程（长文完整）'),
-                h('option', { value: 'single' }, '只取单条帖子'),
+                h('option', { value: 'full' }, t('包含作者自线程（长文完整）')),
+                h('option', { value: 'single' }, t('只取单条帖子')),
               ),
             ),
             h(
               'div',
               { className: 'xal-field xal-grow' },
-              h('label', null, '重复链接'),
+              h('label', null, t('重复链接')),
               h(
                 'select',
                 { className: 'xal-input', value: duplicatePolicy, onChange: (event) => setDuplicatePolicy(event.target.value) },
-                h('option', { value: 'skip' }, '跳过已存在的'),
-                h('option', { value: 'overwrite' }, '重新下载并覆盖'),
+                h('option', { value: 'skip' }, t('跳过已存在的')),
+                h('option', { value: 'overwrite' }, t('重新下载并覆盖')),
               ),
             ),
           ),
@@ -794,11 +989,11 @@
             ? h(
                 'div',
                 { className: 'xal-field' },
-                h('label', null, '归入收藏夹'),
+                h('label', null, t('归入收藏夹')),
                 h(
                   'select',
                   { className: 'xal-input', value: collectionId, onChange: (event) => setCollectionId(event.target.value) },
-                  h('option', { value: '' }, '不归类'),
+                  h('option', { value: '' }, t('不归类')),
                   ...state.collections.map((item) => h('option', { key: item.id, value: item.id }, item.name)),
                 ),
               )
@@ -806,24 +1001,26 @@
           h(
             'div',
             { className: 'xal-field' },
-            h('label', null, '标签（可选，空格或逗号分隔）'),
-            h('input', { className: 'xal-input', value: tags, onChange: (event) => setTags(event.target.value), placeholder: '如 设计 长文' }),
+            h('label', null, t('标签（可选，空格或逗号分隔）')),
+            h('input', { className: 'xal-input', value: tags, onChange: (event) => setTags(event.target.value), placeholder: t('如 设计 长文') }),
           ),
           report
             ? h(
                 'div',
                 { className: 'xal-banner info' },
-                '新增 ' + report.created + ' 篇，跳过 ' + report.skipped + ' 篇' + (report.invalid ? '，无法识别 ' + report.invalid + ' 条' : '') + '。下载在后台进行，完成后会自动出现在列表中。',
+                t('新增 {created} 篇，跳过 {skipped} 篇', { created: report.created, skipped: report.skipped })
+                  + (report.invalid ? t('，无法识别 {invalid} 条', { invalid: report.invalid }) : '')
+                  + t('。下载在后台进行，完成后会自动出现在列表中。'),
               )
             : null,
           h(
             'div',
             { className: 'xal-dialog-actions' },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, report ? '关闭' : '取消')),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, report ? t('关闭') : t('取消'))),
             h(
               'button',
               { className: 'xal-btn primary', onClick: submit, disabled: busy || !detected.length },
-              busy ? h('span', null, h('span', { className: 'xal-spin' }), ' 导入中…') : '开始导入',
+              busy ? h('span', null, h('span', { className: 'xal-spin' }), ' 导入中…') : t('开始导入'),
             ),
           ),
         ),
@@ -836,6 +1033,7 @@
       const [browse, setBrowse] = useState(null);
       const [cacheImages, setCacheImages] = useState(Boolean(state.settings.cacheImages));
       const [concurrency, setConcurrency] = useState(Number(state.settings.downloadConcurrency) || 2);
+      const [language, setLanguage] = useState(state.settings.language || 'zh');
       const [busy, setBusy] = useState(false);
       const [scanReport, setScanReport] = useState(null);
 
@@ -850,7 +1048,8 @@
       async function save() {
         setBusy(true);
         try {
-          const result = await call('settings', { patch: { storageRoot: root, cacheImages, downloadConcurrency: concurrency } });
+          const result = await call('settings', { patch: { storageRoot: root, cacheImages, downloadConcurrency: concurrency, language } });
+          setLang(language);
           onSaved(result.state);
           onClose();
         } catch (error) {
@@ -911,21 +1110,21 @@
         h(
           'div',
           { className: 'xal-dialog' },
-          h('h2', null, '设置'),
-          h('p', { className: 'xal-hint' }, '文章以 Markdown 保存在你选定的目录下，每篇文章一个文件夹，包含 article.md、metadata.json 与本地图片。分类信息只存在索引里，改变分类不会移动文件。'),
+          h('h2', null, t('设置')),
+          h('p', { className: 'xal-hint' }, t('文章以 Markdown 保存在你选定的目录下，每篇文章一个文件夹，包含 article.md、metadata.json 与本地图片。分类信息只存在索引里，改变分类不会移动文件。')),
           h(
             'div',
             { className: 'xal-field' },
-            h('label', null, '存储位置'),
+            h('label', null, t('存储位置')),
             h(
               'div',
               { className: 'xal-row' },
               h('input', { className: 'xal-input xal-grow', value: root, onChange: (event) => setRoot(event.target.value), spellCheck: false }),
-              h('button', { className: 'xal-btn', onClick: pickNativeFolder, disabled: busy, title: '打开系统文件夹选择框' }, h(Glyph, { name: 'folder' }), h('span', null, busy ? '选择中…' : '浏览…')),
-              h('button', { className: 'xal-btn', onClick: openFolderHere, disabled: busy, title: '在系统资源管理器中打开该目录' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开')),
+              h('button', { className: 'xal-btn', onClick: pickNativeFolder, disabled: busy, title: t('打开系统文件夹选择框') }, h(Glyph, { name: 'folder' }), h('span', null, busy ? t('选择中…') : t('浏览…'))),
+              h('button', { className: 'xal-btn', onClick: openFolderHere, disabled: busy, title: t('在系统资源管理器中打开该目录') }, h(Glyph, { name: 'folderOpen' }), h('span', null, t('打开'))),
             ),
-            h('div', { className: 'xal-hint' }, '默认：' + state.defaultStorageRoot),
-            h('div', { className: 'xal-hint' }, '点「浏览…」会弹出系统文件夹选择框；若当前环境没有桌面显示，会自动退回应用内目录列表。已经是相对路径的写法会被拒绝。'),
+            h('div', { className: 'xal-hint' }, t('默认：{n}', { n: state.defaultStorageRoot })),
+            h('div', { className: 'xal-hint' }, t('点「浏览…」会弹出系统文件夹选择框；若当前环境没有桌面显示，会自动退回应用内目录列表。已经是相对路径的写法会被拒绝。')),
           ),
           browse
             ? h(
@@ -934,73 +1133,84 @@
                 h(
                   'div',
                   { className: 'xal-browse-path' },
-                  h('button', { className: 'xal-btn ghost', onClick: () => setBrowse(null) }, h(Glyph, { name: 'chevronUp' }), h('span', null, '收起')),
+                  h('button', { className: 'xal-btn ghost', onClick: () => setBrowse(null) }, h(Glyph, { name: 'chevronUp' }), h('span', null, t('收起'))),
                   h('span', null, browse.path),
                 ),
                 h(
                   'div',
                   { className: 'xal-browse-list' },
                   browse.parent
-                    ? h('button', { className: 'xal-browse-item', onClick: () => openBrowse(browse.parent) }, h(Glyph, { name: 'chevronUp' }), h('span', null, '上级目录'))
+                    ? h('button', { className: 'xal-browse-item', onClick: () => openBrowse(browse.parent) }, h(Glyph, { name: 'chevronUp' }), h('span', null, t('上级目录')))
                     : null,
                   ...browse.entries.map((entry) => h('button', { key: entry.path, className: 'xal-browse-item', onClick: () => openBrowse(entry.path) }, h(Glyph, { name: 'folder' }), h('span', null, entry.name))),
-                  browse.entries.length ? null : h('div', { className: 'xal-hint', style: { padding: '6px 9px' } }, '这个目录下没有子目录'),
+                  browse.entries.length ? null : h('div', { className: 'xal-hint', style: { padding: '6px 9px' } }, t('这个目录下没有子目录')),
                 ),
                 h(
                   'div',
                   { className: 'xal-browse-path', style: { borderTop: '1px solid var(--dsw-alias-border-l1)', borderBottom: 0, flexWrap: 'wrap' } },
-                  h('button', { className: 'xal-btn primary', onClick: () => { setRoot(browse.path); setBrowse(null); } }, h(Glyph, { name: 'check' }), h('span', null, '使用这个目录')),
+                  h('button', { className: 'xal-btn primary', onClick: () => { setRoot(browse.path); setBrowse(null); } }, h(Glyph, { name: 'check' }), h('span', null, t('使用这个目录'))),
                   ...browse.shortcuts.map((item) => h('button', { key: item.path, className: 'xal-btn ghost', onClick: () => openBrowse(item.path) }, item.label)),
                 ),
               )
             : null,
           h(
             'div',
+            { className: 'xal-field' },
+            h('label', null, t('语言')),
+            h(
+              'select',
+              { className: 'xal-input', value: language, onChange: (event) => setLanguage(event.target.value) },
+              h('option', { value: 'zh' }, t('中文')),
+              h('option', { value: 'en' }, t('English')),
+            ),
+          ),
+          h(
+            'div',
             { className: 'xal-row', style: { marginTop: 12, alignItems: 'flex-start' } },
             h(
               'div',
               { className: 'xal-field xal-grow' },
-              h('label', null, '同时下载数'),
+              h('label', null, t('同时下载数')),
               h(
                 'select',
                 { className: 'xal-input', value: String(concurrency), onChange: (event) => setConcurrency(Number(event.target.value)) },
-                h('option', { value: '1' }, '1（最稳）'),
-                h('option', { value: '2' }, '2（推荐）'),
+                h('option', { value: '1' }, t('1（最稳）')),
+                h('option', { value: '2' }, t('2（推荐）')),
                 h('option', { value: '3' }, '3'),
-                h('option', { value: '4' }, '4（最快）'),
+                h('option', { value: '4' }, t('4（最快）')),
               ),
             ),
             h(
               'div',
               { className: 'xal-field xal-grow' },
-              h('label', null, '图片'),
+              h('label', null, t('图片')),
               h(
                 'select',
                 { className: 'xal-input', value: cacheImages ? 'on' : 'off', onChange: (event) => setCacheImages(event.target.value === 'on') },
-                h('option', { value: 'on' }, '下载到本地（离线可看）'),
-                h('option', { value: 'off' }, '保留远程链接'),
+                h('option', { value: 'on' }, t('下载到本地（离线可看）')),
+                h('option', { value: 'off' }, t('保留远程链接')),
               ),
             ),
           ),
           h(
             'div',
             { className: 'xal-field' },
-            h('label', null, '维护'),
+            h('label', null, t('维护')),
             h(
               'div',
               { className: 'xal-row' },
-              h('button', { className: 'xal-btn', onClick: runScan, disabled: busy }, h(Glyph, { name: 'scan' }), h('span', null, busy ? '扫描中…' : '扫描存储目录')),
-              h('span', { className: 'xal-hint', style: { margin: 0 } }, '用于找回被手工放进目录的文章'),
+              h('button', { className: 'xal-btn', onClick: runScan, disabled: busy }, h(Glyph, { name: 'scan' }), h('span', null, busy ? t('扫描中…') : t('扫描存储目录'))),
+              h('span', { className: 'xal-hint', style: { margin: 0 } }, t('用于找回被手工放进目录的文章')),
             ),
             scanReport
-              ? h('div', { className: 'xal-banner info', style: { margin: '8px 0 0' } }, '扫描 ' + scanReport.scanned + ' 个目录，新增 ' + scanReport.imported + '，更新 ' + scanReport.updated + '，缺失 ' + scanReport.missing + '。')
+              ? h('div', { className: 'xal-banner info', style: { margin: '8px 0 0' } }, t('扫描 {scanned} 个目录，新增 {imported}，更新 {updated}，缺失 {missing}。', { scanned: scanReport.scanned, imported: scanReport.imported, updated: scanReport.updated, missing: scanReport.missing }))
               : null,
           ),
           h(
             'div',
             { className: 'xal-dialog-actions' },
-            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, '取消')),
-            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? '保存中…' : '保存设置')),
+            h('button', { className: 'xal-btn ghost', onClick: onClose, disabled: busy }, h(Glyph, { name: 'close' }), h('span', null, t('取消'))),
+            h('button', { className: 'xal-btn primary', onClick: save, disabled: busy }, h(Glyph, { name: 'check' }), h('span', null, busy ? t('保存中…') : t('保存设置'))),
           ),
         ),
       );
@@ -1030,6 +1240,10 @@
       // 上次读到的位置（正文内像素偏移），由阅读进度换算，仅未读完时显示红线。
       const [markTop, setMarkTop] = useState(null);
       const [markPercent, setMarkPercent] = useState(0);
+      // 划线评论：选中正文文字后浮出的工具条状态。
+      const [selection, setSelection] = useState(null); // { text, occurrence, x, y }
+      const [commentDraft, setCommentDraft] = useState('');
+      const mdRef = useRef(null);
       const readerRef = useRef(null);
       const innerRef = useRef(null);
       // 每篇文章只自动定位一次，避免进度上报/尺寸变化反复把视图拉回红线。
@@ -1039,6 +1253,7 @@
         try {
           const data = await call('');
           setState(data);
+          setLang(data && data.settings && data.settings.language);
           setError('');
         } catch (err) {
           setError(err.message);
@@ -1221,6 +1436,53 @@
         return () => window.removeEventListener('keydown', onKey);
       }, [focusMode]);
 
+      // 划线评论：正文里选中文字后浮出工具条。
+      // 用「文本 + 第几次出现」定位回 Markdown，避免依赖 DOM 到源码的精确映射。
+      function onMarkdownMouseUp(event) {
+        const sel = window.getSelection && window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+        const raw = String(sel.toString() || '').trim();
+        if (!raw || raw.length > 400) return;
+        const container = mdRef.current;
+        if (!container || !container.contains(sel.anchorNode) || !container.contains(sel.focusNode)) return;
+        // 数一下这段正文里相同文字出现几次，判断这是第几次（供服务端消歧）。
+        const bodyText = container.textContent || '';
+        let occurrence = 0;
+        let from = 0;
+        while (true) {
+          const at = bodyText.indexOf(raw, from);
+          if (at < 0) break;
+          if (at <= (sel.anchorOffset || 0)) occurrence++;
+          from = at + raw.length;
+        }
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        setSelection({
+          text: raw,
+          occurrence: Math.max(0, occurrence),
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        });
+        setCommentDraft('');
+      }
+
+      async function submitAnnotation(comment) {
+        if (!selection || !selectedId) return;
+        try {
+          await call('annotate', {
+            postId: selectedId,
+            text: selection.text,
+            occurrence: selection.occurrence,
+            comment: comment || '',
+          });
+          // 重新读取正文让划线立即显示。
+          setContent(await call('read', { postId: selectedId }));
+          window.getSelection && window.getSelection().removeAllRanges();
+          setSelection(null);
+        } catch (err) {
+          setError(err.message);
+        }
+      }
+
       const refresh = async (next) => {
         if (next) setState(next);
         else await load();
@@ -1270,10 +1532,10 @@
         const position = { x: event.clientX, y: event.clientY };
         const items = [
           {
-            label: '重命名标题…',
+            label: t('重命名标题…'),
             onClick: () => setPrompt({
-              title: '重命名文章',
-              label: '标题',
+              title: t('重命名文章'),
+              label: t('标题'),
               value: item.title || '',
               onSubmit: async (next) => {
                 const result = await call('update', { postId: item.postId, patch: { title: next } });
@@ -1283,11 +1545,11 @@
             }),
           },
           {
-            label: item.starred ? '取消收藏' : '加入收藏',
+            label: item.starred ? t('取消收藏') : t('加入收藏'),
             onClick: () => toggleStar(item),
           },
           {
-            label: '调整所属收藏夹…',
+            label: t('调整所属收藏夹…'),
             onClick: () => setPicker({
               article: item,
               collections,
@@ -1301,12 +1563,12 @@
         ];
 
         if (item.downloadStatus === 'ready') {
-          items.push({ label: '打开所在位置', onClick: () => revealArticle(item) });
+          items.push({ label: t('打开所在位置'), onClick: () => revealArticle(item) });
         }
-        items.push({ label: '从库中移除', danger: true, onClick: () => removeArticle(item, false) });
-        items.push({ label: '删除含文件', danger: true, onClick: () => removeArticle(item, true) });
+        items.push({ label: t('从库中移除'), danger: true, onClick: () => removeArticle(item, false) });
+        items.push({ label: t('删除含文件'), danger: true, onClick: () => removeArticle(item, true) });
 
-        setContextMenu({ ...position, title: item.title || '帖子 ' + item.postId, items });
+        setContextMenu({ ...position, title: item.title || t('帖子 {n}', { n: item.postId }), items });
       }
 
       /** 收藏夹右键：重命名、删除。 */
@@ -1318,10 +1580,10 @@
           title: collection.name,
           items: [
             {
-              label: '重命名收藏夹…',
+              label: t('重命名收藏夹…'),
               onClick: () => setPrompt({
-                title: '重命名收藏夹',
-                label: '名称',
+                title: t('重命名收藏夹'),
+                label: t('名称'),
                 value: collection.name,
                 onSubmit: async (next) => {
                   const result = await call('updateCollection', { id: collection.id, patch: { name: next } });
@@ -1330,7 +1592,7 @@
               }),
             },
             {
-              label: '删除收藏夹',
+              label: t('删除收藏夹'),
               danger: true,
               onClick: async () => {
                 try {
@@ -1387,19 +1649,19 @@
       }
 
       if (loading && !state) {
-        return h('div', { className: 'xal-root', style: { gridTemplateColumns: '1fr' } }, h(Styles), h('div', { className: 'xal-empty' }, h('span', { className: 'xal-spin' }), '正在载入文章库…'));
+        return h('div', { className: 'xal-root', style: { gridTemplateColumns: '1fr' } }, h(Styles), h('div', { className: 'xal-empty' }, h('span', { className: 'xal-spin' }), t('正在载入文章库…')));
       }
 
       if (!state) {
-        return h('div', { className: 'xal-root', style: { gridTemplateColumns: '1fr' } }, h(Styles), h('div', { className: 'xal-empty' }, h('b', null, '文章库暂不可用'), h('div', null, error || '未知错误')));
+        return h('div', { className: 'xal-root', style: { gridTemplateColumns: '1fr' } }, h(Styles), h('div', { className: 'xal-empty' }, h('b', null, t('文章库暂不可用')), h('div', null, error || t('未知错误'))));
       }
 
-      const viewLabel = view.kind === 'all' ? '全部文章'
-        : view.kind === 'unread' ? '未读'
-          : view.kind === 'starred' ? '收藏'
-            : view.kind === 'failed' ? '需要处理'
-              : view.kind === 'collection' ? ((collections.find((item) => item.id === view.value) || {}).name || '收藏夹')
-                : (view.value || '作者');
+      const viewLabel = view.kind === 'all' ? t('全部文章')
+        : view.kind === 'unread' ? t('未读')
+          : view.kind === 'starred' ? t('收藏')
+            : view.kind === 'failed' ? t('需要处理')
+              : view.kind === 'collection' ? ((collections.find((item) => item.id === view.value) || {}).name || t('收藏夹'))
+                : (view.value || t('作者'));
 
       const navItem = (key, label, count, onClick, active, extra, iconName) => h(
         'button',
@@ -1418,13 +1680,13 @@
         h(
           'nav',
           { className: 'xal-col xal-nav' },
-          h('div', { className: 'xal-nav-title' }, '资料库'),
-          navItem('all', '全部文章', stats.total, () => setView({ kind: 'all', value: '' }), view.kind === 'all', null, 'all'),
-          navItem('unread', '未读', stats.unread, () => setView({ kind: 'unread', value: '' }), view.kind === 'unread', null, 'unread'),
-          navItem('starred', '收藏', stats.starred, () => setView({ kind: 'starred', value: '' }), view.kind === 'starred', null, 'star'),
-          stats.failed ? navItem('failed', '需要处理', stats.failed, () => setView({ kind: 'failed', value: '' }), view.kind === 'failed', null, 'warn') : null,
+          h('div', { className: 'xal-nav-title' }, t('资料库')),
+          navItem('all', t('全部文章'), stats.total, () => setView({ kind: 'all', value: '' }), view.kind === 'all', null, 'all'),
+          navItem('unread', t('未读'), stats.unread, () => setView({ kind: 'unread', value: '' }), view.kind === 'unread', null, 'unread'),
+          navItem('starred', t('收藏'), stats.starred, () => setView({ kind: 'starred', value: '' }), view.kind === 'starred', null, 'star'),
+          stats.failed ? navItem('failed', t('需要处理'), stats.failed, () => setView({ kind: 'failed', value: '' }), view.kind === 'failed', null, 'warn') : null,
 
-          h('div', { className: 'xal-nav-title' }, '收藏夹'),
+          h('div', { className: 'xal-nav-title' }, t('收藏夹')),
           ...collections.map((item) => h(
             'div',
             { key: item.id, style: { display: 'flex', alignItems: 'center', gap: 2 } },
@@ -1444,7 +1706,7 @@
               'button',
               {
                 className: 'xal-btn ghost',
-                title: '删除收藏夹',
+                title: t('删除收藏夹'),
                 style: { padding: '2px 6px', fontSize: 12 },
                 onClick: () => removeCollection(item.id),
               },
@@ -1459,18 +1721,18 @@
                   className: 'xal-input',
                   autoFocus: true,
                   value: newCollection,
-                  placeholder: '收藏夹名称',
+                  placeholder: t('收藏夹名称'),
                   onChange: (event) => setNewCollection(event.target.value),
                   onKeyDown: (event) => {
                     if (event.key === 'Enter') addCollection();
                     if (event.key === 'Escape') { setShowAddCollection(false); setNewCollection(''); }
                   },
                 }),
-                h('button', { className: 'xal-btn', onClick: addCollection, title: '创建' }, h(Glyph, { name: 'check' })),
+                h('button', { className: 'xal-btn', onClick: addCollection, title: t('创建') }, h(Glyph, { name: 'check' })),
               )
-            : h('div', { className: 'xal-nav-add' }, h('button', { className: 'xal-btn ghost', onClick: () => setShowAddCollection(true) }, h(Glyph, { name: 'plus' }), h('span', null, '新建收藏夹'))),
+            : h('div', { className: 'xal-nav-add' }, h('button', { className: 'xal-btn ghost', onClick: () => setShowAddCollection(true) }, h(Glyph, { name: 'plus' }), h('span', null, t('新建收藏夹')))),
 
-          stats.authors.length ? h('div', { className: 'xal-nav-title' }, '博主') : null,
+          stats.authors.length ? h('div', { className: 'xal-nav-title' }, t('博主')) : null,
           ...stats.authors.slice(0, 30).map((author) => navItem(
             'author-' + (author.username || author.name),
             author.name || author.username,
@@ -1482,7 +1744,7 @@
           )),
 
           h('div', { style: { marginTop: 'auto', paddingTop: 12 } },
-            h('button', { className: 'xal-nav-item', onClick: () => setDialog('settings') }, h(Glyph, { name: 'settings' }), h('span', { className: 'xal-nav-label' }, '设置'))),
+            h('button', { className: 'xal-nav-item', onClick: () => setDialog('settings') }, h(Glyph, { name: 'settings' }), h('span', { className: 'xal-nav-label' }, t('设置')))),
         ),
 
         // 中栏：文章列表
@@ -1493,7 +1755,7 @@
             'div',
             { className: 'xal-head' },
             h('h1', { title: viewLabel }, viewLabel),
-            h('button', { className: 'xal-btn primary', onClick: () => setDialog('add'), title: '添加 X 链接' }, h(Glyph, { name: 'plus' }), h('span', null, '添加')),
+            h('button', { className: 'xal-btn primary', onClick: () => setDialog('add'), title: t('添加 X 链接') }, h(Glyph, { name: 'plus' }), h('span', null, t('添加'))),
           ),
           h(
             'div',
@@ -1501,11 +1763,11 @@
             h('input', {
               className: 'xal-input',
               value: query,
-              placeholder: '搜索标题、作者、标签…',
+              placeholder: t('搜索标题、作者、标签…'),
               onChange: (event) => setQuery(event.target.value),
               spellCheck: false,
             }),
-            stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: '重试所有失败的下载' }, h(Glyph, { name: 'refresh' }), h('span', null, '重试')) : null,
+            stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: t('重试所有失败的下载') }, h(Glyph, { name: 'refresh' }), h('span', null, t('重试'))) : null,
           ),
           error ? h('div', { className: 'xal-banner' }, error) : null,
           h(
@@ -1524,21 +1786,21 @@
                     'div',
                     { className: 'xal-item-top' },
                     h(StatusDot, { status: item.downloadStatus }),
-                    h('span', { className: 'xal-item-title' }, item.title || (item.downloadStatus === 'ready' ? '（无标题）' : '帖子 ' + item.postId)),
+                    h('span', { className: 'xal-item-title' }, item.title || (item.downloadStatus === 'ready' ? t('（无标题）') : '帖子 ' + item.postId)),
                     h('span', {
                       className: 'xal-readtag ' + (item.readState === 'read' ? 'read' : item.readState === 'reading' ? 'reading' : 'unread'),
-                      title: item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读',
-                    }, item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读'),
-                    item.starred ? h('span', { style: { color: 'var(--dsw-alias-state-warn-primary)', display: 'inline-flex' }, title: '已收藏' }, h(Glyph, { name: 'star', size: 11 })) : null,
+                      title: item.readState === 'read' ? t('已读') : item.readState === 'reading' ? t('未读完') : t('未读'),
+                    }, item.readState === 'read' ? t('已读') : item.readState === 'reading' ? t('未读完') : t('未读')),
+                    item.starred ? h('span', { style: { color: 'var(--dsw-alias-state-warn-primary)', display: 'inline-flex' }, title: t('已收藏') }, h(Glyph, { name: 'star', size: 11 })) : null,
                   ),
                   item.excerpt ? h('div', { className: 'xal-item-excerpt' }, item.excerpt) : null,
                   h(
                     'div',
                     { className: 'xal-item-meta' },
-                    h('span', null, item.authorName || '未知作者'),
+                    h('span', null, item.authorName || t('未知作者')),
                     h('span', null, '·'),
                     h('span', null, item.publishedAt ? formatDate(item.publishedAt) : relativeTime(item.addedAt)),
-                    item.imageCount ? h('span', { className: 'xal-tag' }, '图 ' + item.imageCount) : null,
+                    item.imageCount ? h('span', { className: 'xal-tag' }, t('图 {n}', { n: item.imageCount })) : null,
                     ...(item.tags || []).slice(0, 2).map((tag) => h('span', { key: tag, className: 'xal-tag' }, tag)),
                   ),
                   item.downloadStatus === 'downloading'
@@ -1547,8 +1809,8 @@
                   item.lastError ? h('div', { className: 'xal-item-meta', style: { color: 'var(--dsw-alias-state-error-primary)' } }, item.lastError) : null,
                 ))
               : h('div', { className: 'xal-empty', style: { height: 'auto', padding: '36px 16px' } },
-                  h('b', null, articles.length ? '没有匹配的文章' : '还没有文章'),
-                  h('div', null, articles.length ? '换个关键词或分类试试' : '点击上方「+ 添加」，粘贴公开的 X 链接'),
+                  h('b', null, articles.length ? t('没有匹配的文章') : t('还没有文章')),
+                  h('div', null, articles.length ? t('换个关键词或分类试试') : t('点击上方「+ 添加」，粘贴公开的 X 链接')),
                 ),
           ),
         ),
@@ -1567,15 +1829,15 @@
                   h(
                     'div',
                     { className: 'xal-tools', style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
-                    h('button', { className: 'xal-btn primary', onClick: () => { setAiOpen(false); setFocusMode(true); }, title: '进入阅读模式（Esc 退出）' }, h(Glyph, { name: 'book' }), h('span', null, '阅读模式')),
-                    h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: '用 AI 总结这篇文章，可继续追问' }, h(Glyph, { name: 'spark' }), h('span', null, '问 AI')),
-                    h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? '取消收藏' : '收藏' },
+                    h('button', { className: 'xal-btn primary', onClick: () => { setAiOpen(false); setFocusMode(true); }, title: t('进入阅读模式（Esc 退出）') }, h(Glyph, { name: 'book' }), h('span', null, t('阅读模式'))),
+                    h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: t('用 AI 总结这篇文章，可继续追问') }, h(Glyph, { name: 'spark' }), h('span', null, t('问 AI'))),
+                    h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? t('取消收藏') : t('收藏按钮') },
                       h(Glyph, { name: 'star' }),
-                      h('span', null, selected.starred ? '已收藏' : '收藏')),
+                      h('span', null, selected.starred ? t('已收藏') : t('收藏按钮'))),
                     // 字号调节：拖动即时生效，松手写回设置。
                     h(
                       'div',
-                      { className: 'xal-fontctl', title: '拖动调整正文字号（' + FONT_MIN + '–' + FONT_MAX + 'px）' },
+                      { className: 'xal-fontctl', title: t('拖动调整正文字号（{min}–{max}px）', { min: FONT_MIN, max: FONT_MAX }) },
                       h(Glyph, { name: 'fontSmaller', size: 12 }),
                       h('input', {
                         type: 'range',
@@ -1583,7 +1845,7 @@
                         max: FONT_MAX,
                         step: 1,
                         value: activeFont,
-                        'aria-label': '正文字号',
+                        'aria-label': t('正文字号'),
                         onChange: (event) => setFontSize(clampFont(event.target.value)),
                         onMouseUp: () => { if (fontSize !== null) saveFont(fontSize); },
                         onTouchEnd: () => { if (fontSize !== null) saveFont(fontSize); },
@@ -1591,10 +1853,10 @@
                       }),
                       h('span', { className: 'xal-fontval' }, activeFont + 'px'),
                     ),
-                    h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: '在资源管理器中显示该文件' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开所在位置')),
-                    h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, '打开原帖')),
-                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: '只移除索引，保留磁盘文件' }, h(Glyph, { name: 'close' }), h('span', null, '从库中移除')),
-                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, true), title: '同时删除磁盘上的文件' }, h(Glyph, { name: 'trash' }), h('span', null, '删除含文件')),
+                    h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: t('在资源管理器中显示该文件') }, h(Glyph, { name: 'folderOpen' }), h('span', null, t('打开所在位置'))),
+                    h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, t('打开原帖'))),
+                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: t('只移除索引，保留磁盘文件') }, h(Glyph, { name: 'close' }), h('span', null, t('从库中移除'))),
+                    h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, true), title: t('同时删除磁盘上的文件') }, h(Glyph, { name: 'trash' }), h('span', null, t('删除含文件'))),
                   ),
                   h('h1', { className: 'xal-title' }, content.title || selected.title),
                   h(
@@ -1603,14 +1865,19 @@
                     h('span', null, content.authorName || selected.authorName),
                     content.authorUsername ? h('span', null, '@' + content.authorUsername) : null,
                     content.publishedAt ? h('span', null, formatDate(content.publishedAt)) : null,
-                    h('span', null, content.imageCount + ' 张图片'),
+                    h('span', null, t('{n} 张图片', { n: content.imageCount })),
                   ),
-                  h('div', { className: 'xal-md', dangerouslySetInnerHTML: { __html: renderMarkdown(content.body, content.postId) } }),
+                  h('div', {
+                  className: 'xal-md',
+                  ref: mdRef,
+                  onMouseUp: onMarkdownMouseUp,
+                  dangerouslySetInnerHTML: { __html: renderMarkdown(content.body, content.postId) },
+                }),
                   markTop !== null
                     ? h('div', {
                         className: 'xal-reading-mark',
                         style: { top: markTop + 'px' },
-                        title: '上次读到的位置（' + markPercent + '%）',
+                        title: t('上次读到的位置（{n}%）', { n: markPercent }),
                       })
                     : null,
                 ),
@@ -1618,27 +1885,27 @@
             : h(                'div',
                 { className: 'xal-empty' },
                 contentLoading
-                  ? h('span', null, h('span', { className: 'xal-spin' }), ' 正在读取…')
+                  ? h('span', null, h('span', { className: 'xal-spin' }), t(' 正在读取…'))
                   : selected
                     ? h('div', null,
-                        h('b', null, selected.title || '帖子 ' + selected.postId),
+                        h('b', null, selected.title || t('帖子 {n}', { n: selected.postId })),
                         h('div', { style: { marginTop: 8 } },
                           selected.downloadStatus === 'downloading' || selected.downloadStatus === 'queued'
-                            ? '正在下载，稍候会自动出现'
-                            : (selected.lastError || '这篇文章还没有可读内容')),
+                            ? t('正在下载，稍候会自动出现')
+                            : (selected.lastError || t('这篇文章还没有可读内容'))),
                         h('div', { style: { marginTop: 10 } },
-                          h('button', { className: 'xal-btn', onClick: () => call('download', { postIds: [selected.postId] }).then((result) => refresh(result.state)).catch((err) => setError(err.message)) }, h(Glyph, { name: 'refresh' }), h('span', null, '重新下载')),
+                          h('button', { className: 'xal-btn', onClick: () => call('download', { postIds: [selected.postId] }).then((result) => refresh(result.state)).catch((err) => setError(err.message)) }, h(Glyph, { name: 'refresh' }), h('span', null, t('重新下载'))),
                         ),
                       )
                     : h('div', null,
-                        h('b', null, stats.total ? '选择一篇开始阅读' : 'X 文章库'),
+                        h('b', null, stats.total ? t('选择一篇开始阅读') : t('X 文章库')),
                         h('div', { style: { marginTop: 8, maxWidth: 420, lineHeight: 1.6 } },
                           stats.total
-                            ? '在左侧选一篇已下载的文章，正文会显示在这里。'
-                            : '把公开的 X 帖子或长文链接贴进来，会自动转成可离线阅读的 Markdown，并按收藏夹和博主归类。'),
+                            ? t('在左侧选一篇已下载的文章，正文会显示在这里。')
+                            : t('把公开的 X 帖子或长文链接贴进来，会自动转成可离线阅读的 Markdown，并按收藏夹和博主归类。')),
                         h('div', { style: { marginTop: 14 } },
-                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, h(Glyph, { name: 'plus' }), h('span', null, '添加链接')),
-                          h('button', { className: 'xal-btn', style: { marginLeft: 8 }, onClick: openStorageFolder, title: '在资源管理器中打开存储目录' }, h(Glyph, { name: 'folderOpen' }), h('span', null, '打开存储目录')),
+                          h('button', { className: 'xal-btn primary', onClick: () => setDialog('add') }, h(Glyph, { name: 'plus' }), h('span', null, t('添加链接'))),
+                          h('button', { className: 'xal-btn', style: { marginLeft: 8 }, onClick: openStorageFolder, title: t('在资源管理器中打开存储目录') }, h(Glyph, { name: 'folderOpen' }), h('span', null, t('打开存储目录'))),
                         ),
                       ),
               ),
@@ -1649,8 +1916,27 @@
           ? h('button', {
               className: 'xal-focus-exit',
               onClick: () => setFocusMode(false),
-              title: '退出阅读模式（Esc）',
-            }, h(Glyph, { name: 'close', size: 13 }), h('span', null, '退出阅读'))
+              title: t('退出阅读模式（Esc）'),
+            }, h(Glyph, { name: 'close', size: 13 }), h('span', null, t('退出阅读')))
+          : null,
+
+        // 划线工具条：选中正文文字后浮出，可只划线或附加评论。
+        selection
+          ? h(
+              'div',
+              {
+                className: 'xal-selbar',
+                style: { left: Math.round(selection.x) + 'px', top: Math.round(selection.y - 48) + 'px' },
+                onMouseDown: (event) => event.preventDefault(),
+              },
+              h('button', { className: 'xal-btn primary', onClick: () => submitAnnotation('') }, t('划线')),
+              h('button', { className: 'xal-btn', onClick: () => {
+                const comment = window.prompt(t('写评论'), commentDraft);
+                if (comment !== null) submitAnnotation(comment);
+                else setSelection(null);
+              } }, t('评论')),
+              h('button', { className: 'xal-btn ghost', onClick: () => setSelection(null), title: t('取消') }, h(Glyph, { name: 'close', size: 12 })),
+            )
           : null,
 
         // 问 AI 侧栏：只在打开且文章可读时出现，作为阅读器的右侧补充栏。
@@ -1690,7 +1976,7 @@
           name: 'sidebar.panellist',
           id: 'x-article-library',
           order: 27,
-          label: 'X 文章',
+          label: t('X 文章'),
         }, Icon));
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'x-article-library' }, Library));
       },

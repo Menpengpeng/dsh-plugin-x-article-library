@@ -141,9 +141,9 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes('function ContextMenu'), '应有通用右键菜单组件');
   assert.ok(source.includes('function PromptDialog'), '应有重命名输入框');
   assert.ok(source.includes('function CollectionPicker'), '应有收藏夹勾选框');
-  assert.ok(source.includes('调整所属收藏夹'), '右键菜单应能调整所属收藏夹');
-  assert.ok(source.includes('重命名标题'), '右键菜单应能重命名文章');
-  assert.ok(source.includes('重命名收藏夹'), '收藏夹右键应能重命名');
+  assert.ok(source.includes("t('调整所属收藏夹") || source.includes("t('调整所属收藏夹…')"), '右键菜单应能调整所属收藏夹（支持 i18n）');
+  assert.ok(source.includes("t('重命名标题"), '右键菜单应能重命名文章（支持 i18n）');
+  assert.ok(source.includes("t('重命名收藏夹"), '收藏夹右键应能重命名（支持 i18n）');
 
   // 两个右键入口都要真的接上。
   assert.ok(/onContextMenu: \(event\) => openArticleMenu\(event, item\)/.test(source), '文章卡片应挂 openArticleMenu');
@@ -155,7 +155,7 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
 {
   assert.ok(/className: 'xal-fontctl'/.test(source), '阅读器工具栏应有字号控件');
   assert.ok(/type: 'range'/.test(source), '字号控件应是拖动滑杆，不是只能点的按钮');
-  assert.ok(source.includes("'aria-label': '正文字号'"), '滑杆要有无障碍标签');
+  assert.ok(source.includes("'aria-label': t('正文字号')"), '滑杆要有无障碍标签（支持 i18n）');
 
   // 范围要落在合理区间，且默认值与 CSS 兜底一致。
   const min = Number((source.match(/const FONT_MIN = (\d+);/) || [])[1]);
@@ -192,7 +192,7 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
 
   // 标签的类名与文案都由 readState 决定，而非写死。
   assert.ok(source.includes("item.readState === 'read' ? 'read' : item.readState === 'reading' ? 'reading' : 'unread'"), '标签类名应由 readState 三态决定');
-  assert.ok(source.includes("item.readState === 'read' ? '已读' : item.readState === 'reading' ? '未读完' : '未读'"), '标签文案应为已读/未读完/未读');
+  assert.ok(source.includes("item.readState === 'read' ? t('已读') : item.readState === 'reading' ? t('未读完') : t('未读')"), '标签文案应为已读/未读完/未读（支持 i18n）');
   // 打开文章先标「未读完」，滚到底才转为「已读」。
   assert.ok(source.includes("patch = { readState: 'reading' }"), '打开文章应标记为未读完');
   assert.ok(source.includes("readState: finished ? 'read' : 'reading'"), '读到底应转为已读');
@@ -237,6 +237,38 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(/\.xal-root\.focus \.xal-tools\{display:none\}/.test(cssText), '阅读模式应彻底隐藏吸顶工具栏');
   assert.ok(!/className: 'xal-tools', style: \{[^}]*marginBottom/.test(source), '不应保留内联 marginBottom 干扰吸顶');
   console.log('工具栏吸顶 OK：sticky 固定顶部、有背景、阅读模式隐藏');
+}
+
+// 中英文界面：所有 UI 文案走 t()，词条表齐备，设置里可切换语言。
+{
+  assert.ok(source.includes('function t(zh, vars)'), '应有 t() 翻译函数');
+  assert.ok(source.includes('function setLang(lang)'), '应有 setLang() 切换语言');
+  assert.ok(/t\('[^']*[\u4e00-\u9fa5]/.test(source), 'UI 文案应通过 t() 包裹中文原文');
+  // 词条表要覆盖足够多的条目，且中英两侧都能占位符替换。
+  const enBlock = source.slice(source.indexOf('en: {'), source.indexOf('\n    };', source.indexOf('en: {')));
+  const entries = [...enBlock.matchAll(/'([^']*[\u4e00-\u9fa5][^']*)'\s*:/g)];
+  assert.ok(entries.length > 100, '英文词条应覆盖主要 UI，实际 ' + entries.length);
+  assert.ok(enBlock.includes('{n}'), '词条应支持 {n} 占位符');
+  assert.ok(source.includes('setLang(data && data.settings && data.settings.language)'), '加载时应应用已保存的语言');
+  assert.ok(/downloadConcurrency: concurrency,\s*language/.test(source), '保存设置应包含 language');
+  assert.ok(source.includes("h('option', { value: 'en' }, t('English'))"), '设置里应有英文选项');
+  console.log('中英文 OK：' + entries.length + ' 条词条，t()/setLang 齐备，设置可切换');
+}
+
+// 划线评论：选中正文后浮出工具条，写回 article.md 的 ==高亮== 标记能渲染。
+{
+  assert.ok(source.includes('function onMarkdownMouseUp'), '应有正文选中监听');
+  assert.ok(source.includes("className: 'xal-selbar'"), '应有浮动划线工具条');
+  assert.ok(source.includes("t('划线')") || source.includes("t('划线')"), '应有划线按钮并支持 i18n');
+  assert.ok(source.includes("t('评论')"), '应有评论按钮并支持 i18n');
+  assert.ok(source.includes("call('annotate'"), '应调用 annotate 写回文件');
+  assert.ok(source.includes('occurrence: selection.occurrence'), '应传递出现序号用于定位');
+  // 渲染器要把 ==...== 解析为高亮，评论以 data-comment 承载，供悬浮查看。
+  assert.ok(/==\(\[\^=\]\+\)==/.test(source), '渲染器应识别 ==高亮== 标记');
+  assert.ok(source.includes('xal-mark'), '高亮应生成带样式的 mark 元素');
+  assert.ok(source.includes('data-comment'), '评论应挂在 mark 上供悬浮查看');
+  assert.ok(cssText.includes('.xal-md mark.xal-mark'), '应有高亮样式');
+  console.log('划线评论 OK：选中浮条 + 写回 ==标记== + 渲染高亮与评论');
 }
 
 console.log('\n客户端模块测试全部通过。');
