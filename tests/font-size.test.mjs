@@ -51,5 +51,16 @@ assert(clampFont(reloaded.settings.readerFontScale * 14) === 12, '0.8 比例落�
 await reloaded.updateSettings({ readerFontScale: 1.6 });
 assert(clampFont(reloaded.settings.readerFontScale * 14) === 22, '1.6 比例落到滑杆最大值 22px');
 
+// 阅读模式持久化（方案 A 的 setFocus 依赖它）。
+await service.updateSettings({ readerFocusMode: true });
+assert(service.settings.readerFocusMode === true, '阅读模式可保存为开启');
+await service.updateSettings({ readerFocusMode: false });
+assert(service.settings.readerFocusMode === false, '阅读模式可保存为关闭');
+await service.updateSettings({ readerFocusMode: 'yes' });
+assert(service.settings.readerFocusMode === true, '非布尔值按 truthy 处理');
+const reloadMode = new LibraryService({ dataDir, defaultStorageRoot: storageRoot });
+await reloadMode.init();
+assert(reloadMode.settings.readerFocusMode === true, '重启后阅读模式保持');
+
 fs.rmSync(home, { recursive: true, force: true });
-console.log('\n字号持久化端到端验证全部通过。');
+console.log('\n字号与阅读模式持久化端到端验证全部通过。');

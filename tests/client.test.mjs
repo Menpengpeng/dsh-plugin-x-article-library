@@ -200,17 +200,26 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('阅读状态三态 OK：未读 / 未读完 / 已读，滚动到底自动转已读');
 }
 
-// 阅读模式：进入后隐藏导航/列表/工具栏，只留正文，并提供退出途径。
+// 阅读模式（方案 A：bot 式模式 chip）：进入后隐藏导航/列表/工具栏，只留正文。
 {
-  assert.ok(source.includes('const [focusMode, setFocusMode] = useState(false)'), '应有阅读模式状态');
+  assert.ok(source.includes('const [focusMode, setFocusMode] = useState(null)'), '应有阅读模式状态（null=待初始化）');
   assert.ok(cssText.includes('.xal-root.focus{grid-template-columns:minmax(0,1fr)}'), '阅读模式应切成单列');
   assert.ok(cssText.includes('.xal-root.focus .xal-nav,.xal-root.focus .xal-list-col{display:none}'), '阅读模式应隐藏左栏与列表');
   assert.ok(cssText.includes('.xal-root.focus .xal-tools'), '阅读模式应隐藏工具栏功能菜单');
-  assert.ok(source.includes("onClick: () => { setAiOpen(false); setFocusMode(true); }"), '进入阅读模式应收起 AI，避免挤掉正文');
-  assert.ok(source.includes("className: 'xal-focus-exit'"), '应有悬浮退出按钮');
+  // 模式 chip：常驻显示、hover 出关闭图标、点击退出（参考 bot）。
+  assert.ok(source.includes("className: 'xal-mode-chip'"), '应有模式 chip 而非悬浮按钮');
+  assert.ok(cssText.includes('.xal-mode-chip:hover .rest-glyph{display:none}'), 'chip hover 应切换为关闭图标');
+  assert.ok(cssText.includes('.xal-mode-chip:hover .exit-glyph{display:inline-flex}'), 'chip hover 应显示退出图标');
+  assert.ok(/onClick: \(\) => setFocus\(false\)/.test(source), '点击 chip 应退出阅读模式');
+  // 统一 setFocus：进入/退出都持久化状态。
+  assert.ok(source.includes('const setFocus = useCallback'), '应有统一模式切换函数');
+  assert.ok(/call\('settings', \{ patch: \{ readerFocusMode:/.test(source), '模式状态应持久化');
+  assert.ok(source.includes('data.settings.readerFocusMode'), '加载时应恢复已保存的模式');
+  assert.ok(/onClick: \(\) => setFocus\(true\)/.test(source), '工具栏按钮应进入阅读模式');
   assert.ok(source.includes("event.key === 'Escape'"), '应支持 Esc 退出');
-  assert.ok(source.includes('setFocusMode(false)') && /setFocusMode\(false\);[\s\S]{0,60}setAiOpen|setAiOpen\(false\);[\s\S]{0,80}setFocusMode\(false\)/.test(source), '换文章应退出阅读模式');
-  console.log('阅读模式 OK：单列沉浸、隐藏功能菜单、悬浮按钮 + Esc 双退出');
+  // 持久化后，换文章不再强制退出——这是与 bot 会话模式一致的行为。
+  assert.ok(!/setFocusMode\(false\);[\s\S]{0,40}try \{/.test(source.slice(source.indexOf('const openArticle'), source.indexOf('const openArticle') + 600)), '换文章不应强制退出阅读模式');
+  console.log('阅读模式 OK：bot 式 chip 切换 + 状态持久化 + Esc 退出');
 }
 
 // 上次读到的位置：仅「未读完」时在正文内按进度画一条红线。

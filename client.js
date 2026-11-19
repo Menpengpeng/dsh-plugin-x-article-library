@@ -150,6 +150,8 @@
         '在资源管理器中打开存储目录': 'Open storage folder in File Explorer',
         '打开存储目录': 'Open Storage Folder',
         '退出阅读模式（Esc）': 'Exit reading mode (Esc)',
+        '点击退出阅读模式（Esc）': 'Click to exit reading mode (Esc)',
+        '阅读模式已开启，点击退出': 'Reading mode on, click to exit',
         '退出阅读': 'Exit Reading',
         '拖动调整正文字号（{min}–{max}px）': 'Drag to adjust font size ({min}–{max}px)',
         '正文字号': 'Font size',
@@ -748,9 +750,14 @@
       '.xal-root.focus .xal-reader-body{padding:34px 6vw 90px}',
       '.xal-root.focus .xal-reader-inner{max-width:820px}',
       '.xal-root.focus .xal-tools{display:none}',
-      // 悬浮退出按钮：只在阅读模式出现，固定在右上角。
-      '.xal-focus-exit{position:absolute;top:14px;right:18px;z-index:30;display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:12px;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}',
-      '.xal-focus-exit:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+      // 模式 chip：常在面板顶部，显示当前「阅读模式」，hover 出关闭图标、点击退出（参考 bot 模式）。
+      '.xal-mode-chip{position:absolute;top:12px;right:18px;z-index:30;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:11.5px;font-family:inherit;line-height:1.4;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.16);transition:background-color .12s,color .12s}',
+      '.xal-mode-chip:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+      '.xal-mode-chip .rest-glyph{display:inline-flex}',
+      '.xal-mode-chip .exit-glyph{display:none}',
+      '.xal-mode-chip:hover .rest-glyph{display:none}',
+      '.xal-mode-chip:hover .exit-glyph{display:inline-flex}',
+      '.xal-mode-chip.busy{opacity:.6;cursor:default}',
       '@container (max-width: 1100px){.xal-root.ai-open{grid-template-columns:minmax(170px,200px) minmax(220px,280px) minmax(0,1fr) minmax(230px,300px)}}',
       '.xal-col{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}',
       '.xal-nav{border-right:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);padding:12px 8px;gap:2px;overflow-y:auto}',
@@ -1240,7 +1247,8 @@
       const [picker, setPicker] = useState(null);
       const [aiOpen, setAiOpen] = useState(false);
       // 阅读模式：隐藏导航/列表与工具栏，只留正文，沉浸式阅读。
-      const [focusMode, setFocusMode] = useState(false);
+      // null 表示还没从服务端设置初始化。
+      const [focusMode, setFocusMode] = useState(null);
       // 正文字号：先本地即时反馈，松手才写回设置，避免拖动时频繁落盘。
       const [fontSize, setFontSize] = useState(null);
       // 上次读到的位置（正文内像素偏移），由阅读进度换算，仅未读完时显示红线。
@@ -1261,6 +1269,8 @@
           const data = await call('');
           setState(data);
           setLang(data && data.settings && data.settings.language);
+          // 阅读模式只在首次加载时跟随已保存的设置，之后尊重用户当前选择。
+          setFocusMode((current) => (current === null ? Boolean(data && data.settings && data.settings.readerFocusMode) : current));
           setError('');
         } catch (err) {
           setError(err.message);
@@ -1305,6 +1315,18 @@
         }
       }, []);
 
+      // 切换阅读模式：改状态并记住选择；进入时收起 AI，正文不被挤占。
+      const setFocus = useCallback(async (on) => {
+        setFocusMode(Boolean(on));
+        if (on) setAiOpen(false);
+        try {
+          const result = await call('settings', { patch: { readerFocusMode: Boolean(on) } });
+          if (result && result.state) setState(result.state);
+        } catch (err) {
+          setError(err.message);
+        }
+      }, []);
+
       const filtered = useMemo(() => {
         const keyword = query.trim().toLowerCase();
         return articles.filter((item) => {
@@ -1326,9 +1348,8 @@
         setSelectedId(postId);
         setContent(null);
         setContentLoading(true);
-        // 换了文章就收起 AI 侧栏、退出阅读模式，避免还看着上一篇的状态。
+        // 换了文章就收起 AI 侧栏；阅读模式是持久模式，切文章时保留。
         setAiOpen(false);
-        setFocusMode(false);
         try {
           const data = await call('read', { postId });
           setContent(data);
@@ -1437,11 +1458,11 @@
       useEffect(() => {
         if (!focusMode) return undefined;
         const onKey = (event) => {
-          if (event.key === 'Escape') setFocusMode(false);
+          if (event.key === 'Escape') setFocus(false);
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-      }, [focusMode]);
+      }, [focusMode, setFocus]);
 
       // 划线评论：正文里选中文字后浮出工具条。
       // 用「文本 + 第几次出现」定位回 Markdown，避免依赖 DOM 到源码的精确映射。
@@ -1852,7 +1873,7 @@
                   h(
                     'div',
                     { className: 'xal-tools', style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
-                    h('button', { className: 'xal-btn primary', onClick: () => { setAiOpen(false); setFocusMode(true); }, title: t('进入阅读模式（Esc 退出）') }, h(Glyph, { name: 'book' }), h('span', null, t('阅读模式'))),
+                    h('button', { className: 'xal-btn primary', onClick: () => setFocus(true), title: t('进入阅读模式（Esc 退出）') }, h(Glyph, { name: 'book' }), h('span', null, t('阅读模式'))),
                     h('button', { className: 'xal-btn', onClick: () => setAiOpen(true), title: t('用 AI 总结这篇文章，可继续追问') }, h(Glyph, { name: 'spark' }), h('span', null, t('问 AI'))),
                     h('button', { className: 'xal-btn', onClick: () => toggleStar(selected), title: selected.starred ? t('取消收藏') : t('收藏按钮') },
                       h(Glyph, { name: 'star' }),
@@ -1936,13 +1957,17 @@
               ),
         ),
 
-        // 阅读模式的悬浮退出按钮，固定在右上角，随时可退出（或按 Esc）。
+        // 模式 chip：常驻显示当前模式，点击退出（hover 图标变关闭），参考 bot 模式。
         focusMode && selected && selected.downloadStatus === 'ready' && content
           ? h('button', {
-              className: 'xal-focus-exit',
-              onClick: () => setFocusMode(false),
-              title: t('退出阅读模式（Esc）'),
-            }, h(Glyph, { name: 'close', size: 13 }), h('span', null, t('退出阅读')))
+              className: 'xal-mode-chip',
+              onClick: () => setFocus(false),
+              title: t('点击退出阅读模式（Esc）'),
+              'aria-label': t('阅读模式已开启，点击退出'),
+            },
+            h('span', { className: 'rest-glyph' }, h(Glyph, { name: 'book', size: 13 })),
+            h('span', { className: 'exit-glyph' }, h(Glyph, { name: 'close', size: 13 })),
+            h('span', null, t('阅读模式')))
           : null,
 
         // 划线工具条：选中正文文字后浮出，可只划线或附加评论。

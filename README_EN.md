@@ -120,7 +120,8 @@ Click "Focus mode" in the toolbar for immersive reading:
 
 - Hides the left navigation, article list and every toolbar action, leaving only centered body text on a wider column.
 - Automatically closes the "Ask AI" sidebar on entry so it can't crowd the text.
-- A floating "Exit focus" button sits in the top-right, or press `Esc`; switching articles exits automatically.
+- A persistent "Reading Mode" chip sits at the top of the panel (like bot mode): its icon turns into a close icon on hover—click it to exit, or press `Esc`.
+- The mode is remembered across restarts, and switching articles keeps you in it for continuous immersive reading.
 
 ### Highlights & comments
 
