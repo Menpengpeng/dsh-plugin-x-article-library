@@ -127,7 +127,7 @@ Click "Focus mode" in the toolbar for immersive reading:
 Select a passage in the body and a small toolbar appears:
 
 - **Highlight**: mark the text with a yellow highlight and underline.
-- **Comment**: type a note; the highlight gains a small bubble marker, and hovering shows your comment.
+- **Comment**: type a note; the highlight gains an orange circular badge, and hovering opens a card showing the full comment at a readable font size with wrapping.
 
 Marks are written directly into that article's `article.md` (`==highlight==` syntax, with comments stored as base64 in an adjacent HTML comment)—no separate file and no dependency on the plugin's index. Copy the Markdown elsewhere and your highlights and comments go with it. When the same text appears multiple times, an occurrence index locates the exact one.
 
@@ -206,7 +206,7 @@ Tool name `x_article_library`, parameter `action`:
 ## HTTP endpoints
 
 - `GET /api/x-article-library` — full current state snapshot.
-- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
+- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `annotate` (write a highlight/comment back into the body) / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
 - `GET /api/x-article-library/asset?postId=&name=` — read a local image.
 
 All endpoints go through Harness Host/Origin authentication and return `Cache-Control: no-store`; POST must be `application/json` with a body up to 64 KiB.

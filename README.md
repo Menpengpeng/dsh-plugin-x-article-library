@@ -127,7 +127,7 @@ pnpm add file:<本仓库绝对路径>
 在正文里选中一段文字，会浮出一个小工具条：
 
 - **划线**：把这段文字高亮（黄色底 + 下划线）。
-- **评论**：弹出输入框，写下想法后，高亮处会出现一个气泡标记，鼠标悬浮即可查看评论。
+- **评论**：在输入框写下想法后，高亮处会出现一个橙色圆形徽章；鼠标悬浮弹出卡片，以正常字号显示完整评论（可换行）。
 
 标记直接写进该篇的 `article.md`（用 `==高亮==` 语法，评论以 base64 存在紧随的 HTML 注释里），不依赖插件的索引，也不会另建文件——你把 Markdown 拷走，划线和评论仍在。同一段文字多处出现时，按出现序号精确定位。
 
@@ -206,7 +206,7 @@ X 与图床（`pbs.twimg.com`）在本机通常需要代理。插件内置零依
 ## HTTP 接口
 
 - `GET /api/x-article-library` — 当前完整状态快照。
-- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
+- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `annotate`（划线评论写回正文）/ `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
 - `GET /api/x-article-library/asset?postId=&name=` — 读取本地图片。
 
 所有接口都经过 Harness 的 Host/Origin 认证检查，返回 `Cache-Control: no-store`；POST 必须是 `application/json`，请求体上限 64 KiB。
@@ -257,8 +257,8 @@ node --check lib/assistant.js
 
 # 运行测试（无需安装依赖）
 npm test
-# 依次覆盖：文件定位 / 右键菜单 / 阅读三态 / 问 AI / Markdown 渲染 /
-#           字号持久化 / 客户端模块 / Host 接口 / 问 AI 端到端
+# 依次覆盖：文件定位 / 右键菜单 / 阅读三态 / 划线评论 / 问 AI / Markdown 渲染 /
+#           字号持久化 / 客户端模块 / Host 接口 / 问 AI 端到端（共 10 组）
 ```
 
 调试接口需要带 DSH 会话凭据，接口本身会拒绝未认证请求。想看日志可在 DSH 启动终端观察。
