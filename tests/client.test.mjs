@@ -270,7 +270,12 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes('xal-mark'), '高亮应生成带样式的 mark 元素');
   assert.ok(source.includes('data-comment'), '评论应挂在 mark 上供悬浮查看');
   assert.ok(cssText.includes('.xal-md mark.xal-mark'), '应有高亮样式');
-  console.log('划线评论 OK：选中浮条 + 写回 ==标记== + 渲染高亮与评论');
+  // 评论气泡：明显的圆形徽章 + 自定义悬浮卡片，而不是 9px 的原生 title 提示。
+  assert.ok(cssText.includes('width:16px') && cssText.includes('height:16px'), '评论徽章应是明显的圆形标记');
+  assert.ok(source.includes('onMarkdownOver') && source.includes('commentPeek'), '悬浮应显示自定义评论卡片');
+  assert.ok(cssText.includes('.xal-comment-peek'), '评论卡片应有样式（正常字号、可换行）');
+  assert.ok(!/title=.+escapeHtml\(mark\.comment\)/.test(source), '不应再用原生 title 显示评论');
+  console.log('划线评论 OK：选中浮条 + 写回 ==标记== + 明显徽章 + 悬浮卡片');
 }
 
 console.log('\n客户端模块测试全部通过。');

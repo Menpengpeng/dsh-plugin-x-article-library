@@ -227,7 +227,7 @@
         if (!mark) return '';
         const inner = renderInline(mark.body);
         if (mark.comment) {
-          return '<mark class="xal-mark" title="' + escapeHtml(mark.comment) + '" data-comment="' + escapeHtml(mark.comment) + '">' + inner + '<sup class="xal-mark-note">💬</sup></mark>';
+          return '<mark class="xal-mark has-comment" data-comment="' + escapeHtml(mark.comment) + '">' + inner + '<sup class="xal-mark-note" aria-label="comment">💬</sup></mark>';
         }
         return '<mark class="xal-mark">' + inner + '</mark>';
       });
@@ -812,9 +812,13 @@
       '.xal-md{line-height:1.72;word-break:break-word}',
       // 划线与评论：黄底高亮，带评论的右上角显示小气泡。
       '.xal-md mark.xal-mark{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 30%,transparent);color:inherit;border-bottom:2px solid var(--dsw-alias-state-warn-primary);border-radius:2px;cursor:help}',
-      '.xal-md .xal-mark-note{font-size:9px;margin-left:2px;vertical-align:super}',
+      // 评论徽章：明显的小圆标，悬浮/点击显示完整评论。
+      '.xal-md mark.xal-mark.has-comment{border-bottom-style:dashed}',
+      '.xal-md .xal-mark-note{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:3px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);font-size:10px;line-height:1;vertical-align:middle;box-shadow:0 1px 3px rgba(0,0,0,.25)}',
       // 选中文字后浮出的划线/评论工具条。
       '.xal-selbar{position:fixed;z-index:90;transform:translateX(-50%);display:flex;gap:5px;align-items:center;padding:5px;border:1px solid var(--dsw-alias-border-l2);border-radius:9px;background:var(--dsw-alias-bg-layer-1);box-shadow:0 8px 24px rgba(0,0,0,.3)}',
+      // 评论悬浮卡片：正常字号、自动换行、可读的最大宽度。
+      '.xal-comment-peek{position:fixed;z-index:95;transform:translateX(-50%);max-width:min(360px,80vw);padding:9px 12px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;box-shadow:0 8px 24px rgba(0,0,0,.32);pointer-events:none}',
       '.xal-md p{margin:0 0 12px}',
       '.xal-md h1,.xal-md h2,.xal-md h3,.xal-md h4,.xal-md h5,.xal-md h6{margin:22px 0 10px;line-height:1.35;font-weight:650}',
       '.xal-md h1{font-size:1.4286em}.xal-md h2{font-size:1.2857em}.xal-md h3{font-size:1.1429em}.xal-md h4{font-size:1.0714em}.xal-md h5,.xal-md h6{font-size:1em;color:var(--dsw-alias-label-secondary)}',
@@ -1245,6 +1249,7 @@
       // 划线评论：选中正文文字后浮出的工具条状态。
       const [selection, setSelection] = useState(null); // { text, occurrence, x, y }
       const [commentPrompt, setCommentPrompt] = useState(null); // 评论输入弹窗参数
+      const [commentPeek, setCommentPeek] = useState(null); // 悬浮查看评论 { text, x, y }
       const mdRef = useRef(null);
       const readerRef = useRef(null);
       const innerRef = useRef(null);
@@ -1464,7 +1469,22 @@
           x: rect.left + rect.width / 2,
           y: rect.top,
         });
-        setCommentDraft('');
+      }
+
+      // 悬浮评论徽章时显示完整评论（比原生 title 更大更清楚）。
+      function onMarkdownOver(event) {
+        const mark = event.target && event.target.closest && event.target.closest('mark.xal-mark.has-comment');
+        if (!mark) { setCommentPeek(null); return; }
+        const text = mark.getAttribute('data-comment') || '';
+        if (!text) { setCommentPeek(null); return; }
+        const rect = mark.getBoundingClientRect();
+        setCommentPeek({ text, x: rect.left + rect.width / 2, y: rect.bottom });
+      }
+
+      function onMarkdownOut(event) {
+        const next = event.relatedTarget;
+        if (next && next.closest && next.closest('mark.xal-mark.has-comment')) return;
+        setCommentPeek(null);
       }
 
       async function submitAnnotation(comment, selOverride) {
@@ -1874,6 +1894,8 @@
                   className: 'xal-md',
                   ref: mdRef,
                   onMouseUp: onMarkdownMouseUp,
+                  onMouseOver: onMarkdownOver,
+                  onMouseOut: onMarkdownOut,
                   dangerouslySetInnerHTML: { __html: renderMarkdown(content.body, content.postId) },
                 }),
                   markTop !== null
@@ -1936,6 +1958,14 @@
               h('button', { className: 'xal-btn', onClick: () => setCommentPrompt({ selection }) }, t('评论')),
               h('button', { className: 'xal-btn ghost', onClick: () => setSelection(null), title: t('取消') }, h(Glyph, { name: 'close', size: 12 })),
             )
+          : null,
+
+        // 评论悬浮卡片：显示完整评论文字。
+        commentPeek
+          ? h('div', {
+              className: 'xal-comment-peek',
+              style: { left: Math.round(commentPeek.x) + 'px', top: Math.round(commentPeek.y + 8) + 'px' },
+            }, commentPeek.text)
           : null,
 
         // 评论输入弹窗：原生 prompt 在 Electron 下不可用，改用插件内对话框。
