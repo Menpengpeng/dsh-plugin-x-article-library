@@ -160,6 +160,8 @@
         '划线': 'Highlight',
         '评论': 'Comment',
         '写评论': 'Write a comment',
+        '评论内容': 'Comment',
+        '写下你的想法…': 'Write your thoughts…',
       },
     };
     let currentLang = 'zh';
@@ -1242,7 +1244,7 @@
       const [markPercent, setMarkPercent] = useState(0);
       // 划线评论：选中正文文字后浮出的工具条状态。
       const [selection, setSelection] = useState(null); // { text, occurrence, x, y }
-      const [commentDraft, setCommentDraft] = useState('');
+      const [commentPrompt, setCommentPrompt] = useState(null); // 评论输入弹窗参数
       const mdRef = useRef(null);
       const readerRef = useRef(null);
       const innerRef = useRef(null);
@@ -1465,13 +1467,14 @@
         setCommentDraft('');
       }
 
-      async function submitAnnotation(comment) {
-        if (!selection || !selectedId) return;
+      async function submitAnnotation(comment, selOverride) {
+        const sel = selOverride || selection;
+        if (!sel || !selectedId) return;
         try {
           await call('annotate', {
             postId: selectedId,
-            text: selection.text,
-            occurrence: selection.occurrence,
+            text: sel.text,
+            occurrence: sel.occurrence,
             comment: comment || '',
           });
           // 重新读取正文让划线立即显示。
@@ -1930,13 +1933,26 @@
                 onMouseDown: (event) => event.preventDefault(),
               },
               h('button', { className: 'xal-btn primary', onClick: () => submitAnnotation('') }, t('划线')),
-              h('button', { className: 'xal-btn', onClick: () => {
-                const comment = window.prompt(t('写评论'), commentDraft);
-                if (comment !== null) submitAnnotation(comment);
-                else setSelection(null);
-              } }, t('评论')),
+              h('button', { className: 'xal-btn', onClick: () => setCommentPrompt({ selection }) }, t('评论')),
               h('button', { className: 'xal-btn ghost', onClick: () => setSelection(null), title: t('取消') }, h(Glyph, { name: 'close', size: 12 })),
             )
+          : null,
+
+        // 评论输入弹窗：原生 prompt 在 Electron 下不可用，改用插件内对话框。
+        commentPrompt
+          ? h(PromptDialog, {
+              key: 'comment-' + (commentPrompt.selection && commentPrompt.selection.text),
+              title: t('写评论'),
+              label: t('评论内容'),
+              value: '',
+              placeholder: t('写下你的想法…'),
+              onClose: () => { setCommentPrompt(null); setSelection(null); },
+              onSubmit: (next) => {
+                const sel = commentPrompt.selection;
+                setCommentPrompt(null);
+                return submitAnnotation(next, sel);
+              },
+            })
           : null,
 
         // 问 AI 侧栏：只在打开且文章可读时出现，作为阅读器的右侧补充栏。

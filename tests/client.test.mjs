@@ -261,8 +261,10 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes("className: 'xal-selbar'"), '应有浮动划线工具条');
   assert.ok(source.includes("t('划线')") || source.includes("t('划线')"), '应有划线按钮并支持 i18n');
   assert.ok(source.includes("t('评论')"), '应有评论按钮并支持 i18n');
+  assert.ok(!source.includes('window.prompt'), 'Electron 下 prompt 不可用，不应使用 window.prompt');
+  assert.ok(source.includes('commentPrompt'), '应使用插件内评论输入框');
   assert.ok(source.includes("call('annotate'"), '应调用 annotate 写回文件');
-  assert.ok(source.includes('occurrence: selection.occurrence'), '应传递出现序号用于定位');
+  assert.ok(/occurrence: (selection|sel)\.occurrence/.test(source), '应传递出现序号用于定位');
   // 渲染器要把 ==...== 解析为高亮，评论以 data-comment 承载，供悬浮查看。
   assert.ok(/==\(\[\^=\]\+\)==/.test(source), '渲染器应识别 ==高亮== 标记');
   assert.ok(source.includes('xal-mark'), '高亮应生成带样式的 mark 元素');

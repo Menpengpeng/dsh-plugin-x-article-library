@@ -1,6 +1,12 @@
-﻿# 更新日志
+# 更新日志
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [0.9.1] - 2026-11-19
+
+### 修复
+
+- **评论点了没反应**：评论输入原用浏览器原生 `window.prompt`，在 Electron 里被禁用（直接返回取消）。改用插件内的评论输入框，输入后正常写入高亮评论。
 
 ## [0.9.0] - 2026-11-19
 
