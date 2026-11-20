@@ -121,6 +121,10 @@
         '添加 {n} 篇': 'Add {n} article(s)',
         '已添加 {n} 篇': 'Added {n} article(s)',
         '，跳过 {n} 篇': ', skipped {n}',
+        '从剪贴板粘贴 X 链接': 'Paste an X link from the clipboard',
+        '粘贴链接': 'Paste link',
+        '无法读取剪贴板，请在搜索框按 Ctrl+V 粘贴': 'Cannot read clipboard—press Ctrl+V in the search box',
+        '剪贴板中没有 X 链接': 'No X link in the clipboard',
         '重试所有失败的下载': 'Retry all failed downloads',
         '重试': 'Retry',
         '（无标题）': '(Untitled)',
@@ -1340,15 +1344,35 @@
       }, []);
 
       // 面板内粘贴 X 分享链接：拦截并弹确认，确认后直接导入。
-      // 走 paste 事件的 clipboardData，不依赖 navigator.clipboard 权限。
-      const X_LINK_RE = /https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/[^\s]+?\/status(?:es)?\/\d{1,25}/gi;
+      // 正则覆盖多种分享格式：带用户名、/i/web/、甚至没有用户名的 /status/123。
+      const X_LINK_RE = /https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/[^\s]*?(?:status|statuses)\/\d{1,25}/gi;
+      function extractXLinks(text) {
+        return [...new Set((String(text || '').match(X_LINK_RE) || []).map((item) => item.replace(/[),.;]+$/, '')))];
+      }
       function onSearchPaste(event) {
         const text = String((event.clipboardData && event.clipboardData.getData('text/plain')) || '');
-        const links = [...new Set((text.match(X_LINK_RE) || []).map((s) => s.replace(/[),.;]+$/, '')))];
+        const links = extractXLinks(text);
         if (!links.length) return; // 不是 X 链接，交给搜索框正常粘贴
         event.preventDefault();
         setPasteLinks(links);
         setQuery('');
+      }
+
+      // 「粘贴链接」按钮：在用户手势里读剪贴板，成功率高；失败则回退提示用 Ctrl+V。
+      async function onPasteButton() {
+        let text = '';
+        try {
+          text = await navigator.clipboard.readText();
+        } catch {
+          setError(t('无法读取剪贴板，请在搜索框按 Ctrl+V 粘贴'));
+          return;
+        }
+        const links = extractXLinks(text);
+        if (!links.length) {
+          setError(t('剪贴板中没有 X 链接'));
+          return;
+        }
+        setPasteLinks(links);
       }
 
       async function confirmPaste() {
@@ -1857,6 +1881,7 @@
               onPaste: onSearchPaste,
               spellCheck: false,
             }),
+            h('button', { className: 'xal-btn', onClick: onPasteButton, title: t('从剪贴板粘贴 X 链接') }, h(Glyph, { name: 'plus' }), h('span', null, t('粘贴链接'))),
             stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: t('重试所有失败的下载') }, h(Glyph, { name: 'refresh' }), h('span', null, t('重试'))) : null,
           ),
           error ? h('div', { className: 'xal-banner' }, error) : null,

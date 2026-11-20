@@ -293,7 +293,8 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes('onPaste: onSearchPaste'), '搜索框应绑定粘贴监听');
   // 走 paste 事件的 clipboardData，不依赖 navigator.clipboard 权限。
   assert.ok(source.includes("event.clipboardData && event.clipboardData.getData('text/plain')"), '应从 paste 事件读剪贴板文本');
-  assert.ok(!/navigator\.clipboard\.readText/.test(source), '不应依赖受权限限制的 clipboard API');
+  // 主路径走 paste 事件；按钮兜底才用 clipboard API，且失败会明确提示。
+  assert.ok(source.includes('navigator.clipboard.readText') && source.includes('无法读取剪贴板'), '按钮兜底用 clipboard API，失败有提示');
   assert.ok(source.includes('twitter\\.com') && source.includes('status'), '应识别 X/Twitter 链接');
   assert.ok(source.includes('setPasteLinks(links)'), '识别到链接应弹确认');
   assert.ok(source.includes('className: \'xal-paste-links\''), '确认框应列出检测到的链接');

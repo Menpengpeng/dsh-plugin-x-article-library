@@ -1,4 +1,4 @@
-﻿# X Article Library
+# X Article Library
 
 [English](README_EN.md) · [简体中文](README.md)
 
@@ -60,7 +60,7 @@ Then add the package name to `dsh.profile.bundles` in `package.json` and restart
 3. Choose the content scope: **include the author's own thread** (full long-form post) or **single post only**.
 4. Downloads run in the background; finished articles appear in the list automatically. Click one to read it on the right.
 
-**Faster way**: tap Share on X to copy the post link, switch back to the X Articles panel, and press `Ctrl+V` in the article-list **search box**—the plugin detects the link and shows a confirmation; click "Add" to save it. Multiple links are supported and non-X links are ignored.
+**Faster way**: tap Share on X to copy the post link, switch back to the X Articles panel, and click the "Paste link" button beside the search box (or press `Ctrl+V` in the search box)—the plugin detects the link and shows a confirmation; click "Add" to save it. Multiple links are supported and non-X links are ignored.
 
 ### Settings
 
