@@ -12,7 +12,7 @@ Left: library navigation (All / Unread / Starred / Collections / Authors). Middl
 
 ## Features
 
-- **Paste to save**: paste multiple links at once; post IDs are detected and deduplicated. Plain numeric IDs also work.
+- **Paste to save**: paste multiple links at once; post IDs are detected and deduplicated. Plain numeric IDs also work. Paste an X share link into the search box to get an add confirmation.
 - **Markdown on disk**: each article is a folder with its body, metadata and local images—readable without this plugin.
 - **Three-pane reader**: left for navigation (All / Unread / Starred / Needs attention / Collections / Authors), middle for the article list (search, status, progress), right for Markdown reading.
 - **Organize without moving files**: collections and tags are index-only; renaming or reclassifying never moves files on disk.
@@ -59,6 +59,8 @@ Then add the package name to `dsh.profile.bundles` in `package.json` and restart
 2. Click "+ Add" and paste public X links (e.g. `https://x.com/user/status/1234567890`); multiple links are fine.
 3. Choose the content scope: **include the author's own thread** (full long-form post) or **single post only**.
 4. Downloads run in the background; finished articles appear in the list automatically. Click one to read it on the right.
+
+**Faster way**: tap Share on X to copy the post link, switch back to the X Articles panel, and press `Ctrl+V` in the article-list **search box**—the plugin detects the link and shows a confirmation; click "Add" to save it. Multiple links are supported and non-X links are ignored.
 
 ### Settings
 

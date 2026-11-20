@@ -287,4 +287,19 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('划线评论 OK：选中浮条 + 写回 ==标记== + 明显徽章 + 悬浮卡片');
 }
 
+// 粘贴即添加：搜索框粘贴 X 链接时识别并弹确认框。
+{
+  assert.ok(source.includes('function onSearchPaste'), '应有粘贴处理函数');
+  assert.ok(source.includes('onPaste: onSearchPaste'), '搜索框应绑定粘贴监听');
+  // 走 paste 事件的 clipboardData，不依赖 navigator.clipboard 权限。
+  assert.ok(source.includes("event.clipboardData && event.clipboardData.getData('text/plain')"), '应从 paste 事件读剪贴板文本');
+  assert.ok(!/navigator\.clipboard\.readText/.test(source), '不应依赖受权限限制的 clipboard API');
+  assert.ok(source.includes('twitter\\.com') && source.includes('status'), '应识别 X/Twitter 链接');
+  assert.ok(source.includes('setPasteLinks(links)'), '识别到链接应弹确认');
+  assert.ok(source.includes('className: \'xal-paste-links\''), '确认框应列出检测到的链接');
+  assert.ok(source.includes("call('import'"), '确认后应调用 import 导入');
+  assert.ok(cssText.includes('.xal-paste-links'), '粘贴链接列表应有样式');
+  console.log('粘贴即添加 OK：paste 事件读剪贴板 + 识别 X 链接 + 确认导入');
+}
+
 console.log('\n客户端模块测试全部通过。');

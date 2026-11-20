@@ -116,6 +116,11 @@
         '添加 X 链接': 'Add X link',
         '添加': 'Add',
         '搜索标题、作者、标签…': 'Search titles, authors, tags…',
+        '搜索标题、作者、标签…或粘贴 X 链接': 'Search titles, authors, tags… or paste an X link',
+        '检测到剪贴板中的 X 链接，是否添加到文章库？': 'An X link was detected in your paste. Add it to the library?',
+        '添加 {n} 篇': 'Add {n} article(s)',
+        '已添加 {n} 篇': 'Added {n} article(s)',
+        '，跳过 {n} 篇': ', skipped {n}',
         '重试所有失败的下载': 'Retry all failed downloads',
         '重试': 'Retry',
         '（无标题）': '(Untitled)',
@@ -826,6 +831,10 @@
       '.xal-selbar{position:fixed;z-index:90;transform:translateX(-50%);display:flex;gap:5px;align-items:center;padding:5px;border:1px solid var(--dsw-alias-border-l2);border-radius:9px;background:var(--dsw-alias-bg-layer-1);box-shadow:0 8px 24px rgba(0,0,0,.3)}',
       // 评论悬浮卡片：正常字号、自动换行、可读的最大宽度。
       '.xal-comment-peek{position:fixed;z-index:95;transform:translateX(-50%);max-width:min(360px,80vw);padding:9px 12px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;box-shadow:0 8px 24px rgba(0,0,0,.32);pointer-events:none}',
+      // 粘贴链接确认框里的链接列表。
+      '.xal-paste-links{max-height:160px;overflow-y:auto;margin:4px 0 12px;border:1px solid var(--dsw-alias-border-l1);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}',
+      '.xal-paste-link{padding:6px 9px;font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--dsw-alias-border-l1)}',
+      '.xal-paste-link:last-child{border-bottom:0}',
       '.xal-md p{margin:0 0 12px}',
       '.xal-md h1,.xal-md h2,.xal-md h3,.xal-md h4,.xal-md h5,.xal-md h6{margin:22px 0 10px;line-height:1.35;font-weight:650}',
       '.xal-md h1{font-size:1.4286em}.xal-md h2{font-size:1.2857em}.xal-md h3{font-size:1.1429em}.xal-md h4{font-size:1.0714em}.xal-md h5,.xal-md h6{font-size:1em;color:var(--dsw-alias-label-secondary)}',
@@ -1236,6 +1245,9 @@
       const [loading, setLoading] = useState(true);
       const [view, setView] = useState({ kind: 'all', value: '' });
       const [query, setQuery] = useState('');
+      // 粘贴 X 链接后的确认弹窗 { links }——从 X 分享复制链接后在面板粘贴即可触发。
+      const [pasteLinks, setPasteLinks] = useState(null);
+      const [notice, setNotice] = useState('');
       const [selectedId, setSelectedId] = useState('');
       const [content, setContent] = useState(null);
       const [contentLoading, setContentLoading] = useState(false);
@@ -1326,6 +1338,39 @@
           setError(err.message);
         }
       }, []);
+
+      // 面板内粘贴 X 分享链接：拦截并弹确认，确认后直接导入。
+      // 走 paste 事件的 clipboardData，不依赖 navigator.clipboard 权限。
+      const X_LINK_RE = /https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/[^\s]+?\/status(?:es)?\/\d{1,25}/gi;
+      function onSearchPaste(event) {
+        const text = String((event.clipboardData && event.clipboardData.getData('text/plain')) || '');
+        const links = [...new Set((text.match(X_LINK_RE) || []).map((s) => s.replace(/[),.;]+$/, '')))];
+        if (!links.length) return; // 不是 X 链接，交给搜索框正常粘贴
+        event.preventDefault();
+        setPasteLinks(links);
+        setQuery('');
+      }
+
+      async function confirmPaste() {
+        if (!pasteLinks) return;
+        try {
+          const result = await call('import', {
+            links: pasteLinks.join('\n'),
+            threadMode: state.settings.defaultThreadMode || 'full',
+            duplicatePolicy: state.settings.duplicatePolicy || 'skip',
+            tags: [],
+            collectionIds: state.settings.defaultCollectionId ? [state.settings.defaultCollectionId] : [],
+          });
+          setState(result.state);
+          const added = result.created.length;
+          const skipped = result.skipped.length;
+          setNotice(t('已添加 {n} 篇', { n: added }) + (skipped ? t('，跳过 {n} 篇', { n: skipped }) : ''));
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setPasteLinks(null);
+        }
+      }
 
       const filtered = useMemo(() => {
         const keyword = query.trim().toLowerCase();
@@ -1807,13 +1852,15 @@
             h('input', {
               className: 'xal-input',
               value: query,
-              placeholder: t('搜索标题、作者、标签…'),
+              placeholder: t('搜索标题、作者、标签…或粘贴 X 链接'),
               onChange: (event) => setQuery(event.target.value),
+              onPaste: onSearchPaste,
               spellCheck: false,
             }),
             stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: t('重试所有失败的下载') }, h(Glyph, { name: 'refresh' }), h('span', null, t('重试'))) : null,
           ),
           error ? h('div', { className: 'xal-banner' }, error) : null,
+          notice ? h('div', { className: 'xal-banner info' }, notice) : null,
           h(
             'div',
             { className: 'xal-items' },
@@ -2022,6 +2069,27 @@
 
         dialog === 'add' ? h(AddDialog, { state, onClose: () => setDialog(''), onDone: (next) => refresh(next), onError: setError }) : null,
         dialog === 'settings' ? h(SettingsDialog, { state, onClose: () => setDialog(''), onSaved: (next) => refresh(next), onError: setError }) : null,
+
+        // 粘贴 X 链接后的确认框。
+        pasteLinks
+          ? h(
+              'div',
+              { className: 'xal-overlay', onMouseDown: (event) => { if (event.target === event.currentTarget) setPasteLinks(null); } },
+              h(
+                'div',
+                { className: 'xal-dialog', style: { maxWidth: 460 } },
+                h('h2', null, t('添加到 X 文章')),
+                h('p', { className: 'xal-hint' }, t('检测到剪贴板中的 X 链接，是否添加到文章库？')),
+                h('div', { className: 'xal-paste-links' }, pasteLinks.map((link) => h('div', { key: link, className: 'xal-paste-link', title: link }, link))),
+                h(
+                  'div',
+                  { className: 'xal-dialog-actions' },
+                  h('button', { className: 'xal-btn ghost', onClick: () => setPasteLinks(null) }, t('取消')),
+                  h('button', { className: 'xal-btn primary', onClick: confirmPaste }, t('添加 {n} 篇', { n: pasteLinks.length })),
+                ),
+              ),
+            )
+          : null,
 
         contextMenu ? h(ContextMenu, { menu: contextMenu, onClose: () => setContextMenu(null) }) : null,
         prompt ? h(PromptDialog, {
