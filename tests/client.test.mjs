@@ -303,4 +303,15 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   console.log('粘贴即添加 OK：paste 事件读剪贴板 + 识别 X 链接 + 确认导入');
 }
 
+// 导出 PDF：工具栏按钮 + 调用 exportPdf action。
+{
+  assert.ok(source.includes('async function exportPdf'), '应有导出处理函数');
+  assert.ok(source.includes("call('exportPdf'"), '应调用 exportPdf action');
+  assert.ok(source.includes("t('导出 PDF')"), '应有导出按钮文案');
+  assert.ok(source.includes('name: \'download\''), '应有下载图标');
+  assert.ok(source.includes('exportingPdf'), '应有导出中状态防重复点击');
+  assert.ok(source.includes("t('已导出 PDF：{n}'"), '导出后应提示文件路径');
+  console.log('导出 PDF OK：工具栏按钮 + exportPdf action + 路径提示');
+}
+
 console.log('\n客户端模块测试全部通过。');

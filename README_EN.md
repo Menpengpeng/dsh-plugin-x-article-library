@@ -1,4 +1,4 @@
-# X Article Library
+﻿# X Article Library
 
 [English](README_EN.md) · [简体中文](README.md)
 
@@ -25,6 +25,7 @@ Left: library navigation (All / Unread / Starred / Collections / Authors). Middl
 - **Three reading states**: each list item carries an Unread / Reading / Read badge. Opening an article marks it Reading; it becomes Read once you scroll to the end. The Unread filter includes in-progress articles.
 - **Focus mode**: click "Focus mode" to hide both sidebars and all toolbar actions, leaving only the text for immersive reading. Exit with the floating button or `Esc`.
 - **Sticky toolbar**: the toolbar stays pinned to the top of the reading area while you scroll.
+- **PDF export**: turn the current article into a clean A4 PDF saved next to the Markdown, keeping structure, images and highlights.
 - **Highlights & comments**: select text in the body to reveal a small toolbar—highlight it or add a comment. Marks are written into `article.md` and shown as highlights with a hoverable comment bubble.
 - **Bilingual UI**: switch the entire interface between Chinese and English in Settings; the choice is remembered.
 - **AI tool**: registers an `x_article_library` tool so an agent can add links, list articles and read content in a conversation.
@@ -134,6 +135,12 @@ Select a passage in the body and a small toolbar appears:
 
 Marks are written directly into that article's `article.md` (`==highlight==` syntax, with comments stored as base64 in an adjacent HTML comment)—no separate file and no dependency on the plugin's index. Copy the Markdown elsewhere and your highlights and comments go with it. When the same text appears multiple times, an occurrence index locates the exact one.
 
+### Export PDF
+
+Click "Export PDF" in the reader toolbar to turn the current article into a clean A4 PDF saved as `article.pdf` in its folder (the Markdown is untouched). Title, author, date, source link, body structure, lists, quotes, code blocks, hyperlinks, local images and highlights are all preserved.
+
+Generation uses your locally installed Chrome/Edge (headless printing, no extra dependency, Chinese text renders correctly); if no browser is found you get a clear message. After export the file path is shown, and you can use "Open file location" to view it.
+
 ### Interface language
 
 The **Language** option in Settings switches between **Chinese / English**. The whole interface updates immediately and your choice is remembered.
@@ -209,7 +216,7 @@ Tool name `x_article_library`, parameter `action`:
 ## HTTP endpoints
 
 - `GET /api/x-article-library` — full current state snapshot.
-- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `annotate` (write a highlight/comment back into the body) / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
+- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `annotate` (write a highlight/comment back into the body) / `exportPdf` (export to PDF) / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
 - `GET /api/x-article-library/asset?postId=&name=` — read a local image.
 
 All endpoints go through Harness Host/Origin authentication and return `Cache-Control: no-store`; POST must be `application/json` with a body up to 64 KiB.
@@ -239,7 +246,9 @@ x-article-library/
   lib/core.js           # link parsing, fetching, Front Matter, images and file writes
   lib/library.js        # index storage, download queue, article and collection services
   lib/reveal.js         # reveal files in file managers / open directories (cross-platform)
-  tests/                # dependency-free self-test scripts
+  lib/pdf.js            # Markdown to HTML, A4 styling, PDF export
+  lib/pdf-print.js      # drive Chrome/Edge headless to print HTML as PDF
+  tests/                # self-test scripts (PDF end-to-end test needs a local Chrome/Edge)
   locale/zh.json        # Chinese strings
   locale/en.json        # English strings
   icon.svg              # sidebar icon

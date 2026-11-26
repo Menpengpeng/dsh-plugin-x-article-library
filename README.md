@@ -1,4 +1,4 @@
-# X 文章库（X Article Library）
+﻿# X 文章库（X Article Library）
 
 [简体中文](README.md) · [English](README_EN.md)
 
@@ -25,6 +25,7 @@ DSH 桌面版插件。把公开的 X（Twitter）帖子与长文链接保存为�
 - **阅读三态**：列表标题上有「未读 / 未读完 / 已读」标签。打开文章算未读完，滚到底才算已读；「未读」筛选会包含未读完的文章。
 - **阅读模式**：工具栏点「阅读模式」收起两侧栏与功能菜单，只留正文沉浸阅读；右上角按钮或 `Esc` 退出。
 - **工具栏吸顶**：滚动正文时上方功能按钮固定在阅读区顶部，随时可用。
+- **导出 PDF**：一键把当前文章转成排版清晰的 A4 PDF，保存到文章目录，保留正文结构、图片与划线高亮。
 - **划线与评论**：选中正文一段文字，浮出工具条即可划线或写评论，标记写进 `article.md`，高亮显示、悬浮看评论。
 - **中英文界面**：设置里切换界面语言，整个 UI 即时中英切换并记住选择。
 - **AI 工具**：注册 `x_article_library` 工具，可在会话中让 AI 添加链接、列出文章、读取正文。
@@ -134,6 +135,12 @@ pnpm add file:<本仓库绝对路径>
 
 标记直接写进该篇的 `article.md`（用 `==高亮==` 语法，评论以 base64 存在紧随的 HTML 注释里），不依赖插件的索引，也不会另建文件——你把 Markdown 拷走，划线和评论仍在。同一段文字多处出现时，按出现序号精确定位。
 
+### 导出 PDF
+
+阅读器工具栏点「导出 PDF」，把当前文章转成排版清晰的 A4 PDF，保存为该篇目录下的 `article.pdf`（不影响原 Markdown）。保留标题、作者、日期、原文链接、正文结构、列表、引用、代码块、超链接、本地图片和划线高亮。
+
+生成基于本机已安装的 Chrome/Edge（headless 打印，无需额外依赖，中文显示正常）；找不到浏览器时会明确提示。导出后界面显示文件路径，可点「打开所在位置」查看。
+
 ### 界面语言
 
 设置里的「语言」可选**中文 / English**，切换后整个界面即时更新，选择会被记住。
@@ -209,7 +216,7 @@ X 与图床（`pbs.twimg.com`）在本机通常需要代理。插件内置零依
 ## HTTP 接口
 
 - `GET /api/x-article-library` — 当前完整状态快照。
-- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `annotate`（划线评论写回正文）/ `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
+- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `annotate`（划线评论写回正文）/ `exportPdf`（导出 PDF）/ `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
 - `GET /api/x-article-library/asset?postId=&name=` — 读取本地图片。
 
 所有接口都经过 Harness 的 Host/Origin 认证检查，返回 `Cache-Control: no-store`；POST 必须是 `application/json`，请求体上限 64 KiB。
@@ -239,7 +246,9 @@ x-article-library/
   lib/core.js           # 链接解析、内容抓取、Front Matter、图片与文件写入
   lib/library.js        # 索引存储、下载队列、文章与收藏夹服务
   lib/reveal.js         # 在系统文件管理器中定位文件 / 打开目录（跨平台）
-  tests/                # 无需依赖的自测脚本
+  lib/pdf.js            # Markdown 转 HTML、组装 A4 样式、导出 PDF
+  lib/pdf-print.js      # 调 Chrome/Edge headless 打印 HTML 为 PDF
+  tests/                # 自测脚本（PDF 端到端测试需本机有 Chrome/Edge）
   locale/zh.json        # 中文文案
   locale/en.json        # 英文文案
   icon.svg              # 侧边栏图标

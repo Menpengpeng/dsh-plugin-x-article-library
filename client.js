@@ -125,6 +125,10 @@
         '粘贴链接': 'Paste link',
         '无法读取剪贴板，请在搜索框按 Ctrl+V 粘贴': 'Cannot read clipboard—press Ctrl+V in the search box',
         '剪贴板中没有 X 链接': 'No X link in the clipboard',
+        '导出 PDF': 'Export PDF',
+        '导出中…': 'Exporting…',
+        '导出为 PDF，保存到文章目录': 'Export as PDF into the article folder',
+        '已导出 PDF：{n}': 'Exported PDF: {n}',
         '重试所有失败的下载': 'Retry all failed downloads',
         '重试': 'Retry',
         '（无标题）': '(Untitled)',
@@ -467,6 +471,8 @@
       // 字号：大 A 小 A，用于正文字号控件两端。
       fontLarger: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M14.6 19l2.9-8.2L20.4 19M15.5 16.6h3.9',
       fontSmaller: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M20.4 15.2h-5.2',
+      // 导出：向下箭头落到托盘。
+      download: 'M12 4v10.6M7.6 10.6L12 15l4.4-4.4M5 19.4h14',
       // 阅读模式：一本翻开的书。
       book: 'M12 6.4C9.8 5 7.2 4.8 4.4 5.6v12c2.8-.8 5.4-.6 7.6.8 2.2-1.4 4.8-1.6 7.6-.8v-12C16.8 4.8 14.2 5 12 6.4zM12 6.4v12',
     };
@@ -1252,6 +1258,7 @@
       // 粘贴 X 链接后的确认弹窗 { links }——从 X 分享复制链接后在面板粘贴即可触发。
       const [pasteLinks, setPasteLinks] = useState(null);
       const [notice, setNotice] = useState('');
+      const [exportingPdf, setExportingPdf] = useState('');
       const [selectedId, setSelectedId] = useState('');
       const [content, setContent] = useState(null);
       const [contentLoading, setContentLoading] = useState(false);
@@ -1393,6 +1400,20 @@
           setError(err.message);
         } finally {
           setPasteLinks(null);
+        }
+      }
+
+      // 导出当前文章为 PDF（保存到文章目录），完成后提示路径。
+      async function exportPdf(item) {
+        if (!item || exportingPdf) return;
+        setExportingPdf(item.postId);
+        try {
+          const result = await call('exportPdf', { postId: item.postId });
+          setNotice(t('已导出 PDF：{n}', { n: result.path }));
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setExportingPdf('');
         }
       }
 
@@ -1969,6 +1990,7 @@
                       }),
                       h('span', { className: 'xal-fontval' }, activeFont + 'px'),
                     ),
+                    h('button', { className: 'xal-btn', onClick: () => exportPdf(selected), title: t('导出为 PDF，保存到文章目录') }, h(Glyph, { name: 'download' }), h('span', null, exportingPdf === selected.postId ? t('导出中…') : t('导出 PDF'))),
                     h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: t('在资源管理器中显示该文件') }, h(Glyph, { name: 'folderOpen' }), h('span', null, t('打开所在位置'))),
                     h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, t('打开原帖'))),
                     h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: t('只移除索引，保留磁盘文件') }, h(Glyph, { name: 'close' }), h('span', null, t('从库中移除'))),

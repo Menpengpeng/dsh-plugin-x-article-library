@@ -173,6 +173,11 @@ export function apply(ctx, config = {}) {
       await ready;
       return service.readContent(String(input.postId || ''));
     },
+    /** 导出当前文章为 PDF，保存到文章目录。 */
+    async exportPdf(input) {
+      await ready;
+      return service.exportPdf(String(input.postId || ''));
+    },
     /** 划线/评论：把选中文字写回 article.md。 */
     async annotate(input) {
       await ready;
