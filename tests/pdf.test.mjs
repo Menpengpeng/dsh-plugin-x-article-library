@@ -35,6 +35,67 @@ const result = await exportArticlePdf({ body, articleDirAbs: tmp, title: '测试
 assert(result.path === target, '导出到指定路径');
 const stat = await fs.stat(target);
 assert(stat.size === result.bytes && stat.size > 1000, '文件已写盘且非空: ' + stat.size);
+// 导出状态：hasPdf 决定按钮是「导出 PDF」还是「查看 PDF」。
+{
+  const { LibraryService } = await import('../lib/library.js');
+  const root = path.join(tmp, 'lib');
+  const dataDir = path.join(tmp, 'data');
+  await fs.mkdir(path.join(root, 'articles', '30'), { recursive: true });
+  await fs.mkdir(dataDir, { recursive: true });
+  await fs.writeFile(
+    path.join(root, 'articles', '30', 'article.md'),
+    '\uFEFF---\ntitle: 状态测试\n---\n\n# 状态测试\n\n正文。',
+    'utf8',
+  );
+
+  const service = new LibraryService({ dataDir, defaultStorageRoot: root });
+  await service.init();
+  service.store.state.articles['30'] = {
+    postId: '30',
+    title: '状态测试',
+    downloadStatus: 'ready',
+    relativeMarkdownPath: 'articles/30/article.md',
+    storageRoot: root,
+    collectionIds: [],
+    tags: [],
+    readState: 'unread',
+    readingProgress: 0,
+    addedAt: new Date().toISOString(),
+  };
+  await service.store.save();
+
+  // 未导出时：hasPdf 为假
+  let list = service.snapshot().articles.find((item) => item.postId === '30');
+  assert(list.hasPdf === false, '未导出时 hasPdf 应为 false');
+
+  // 导出后：hasPdf 变真，PDF 落盘
+  const exported = await service.exportPdf('30');
+  assert(exported.bytes > 1000, '导出应生成非空 PDF');
+  list = service.snapshot().articles.find((item) => item.postId === '30');
+  assert(list.hasPdf === true, '导出后 hasPdf 应为 true');
+  const pdfPath = path.join(root, 'articles', '30', 'article.pdf');
+  const stat = await fs.stat(pdfPath);
+  assert(stat.size > 1000, 'PDF 应写盘');
+  console.log('导出后标记 OK：hasPdf 由 false 变 true，PDF 落盘');
+
+  // 删除 PDF 后扫描：标记应被自动校准回 false
+  await fs.rm(pdfPath);
+  await service.scan();
+  list = service.snapshot().articles.find((item) => item.postId === '30');
+  assert(list.hasPdf === false, 'PDF 被删除后扫描应把 hasPdf 校准回 false');
+  console.log('扫描校准 OK：PDF 被删除后 hasPdf 自动回到 false');
+
+  // PDF 不存在时 openPdf 应报 not-found，而不是抛系统错误
+  let rejected = null;
+  try {
+    await service.openPdf('30');
+  } catch (error) {
+    rejected = error;
+  }
+  assert(rejected && rejected.code === 'not-found', 'PDF 不存在时 openPdf 应报 not-found');
+  console.log('openPdf 缺失处理 OK：报 not-found');
+}
+
 await fs.rm(tmp, { recursive: true, force: true });
 
 console.log('\nPDF 导出端到端验证全部通过。');

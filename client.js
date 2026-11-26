@@ -129,6 +129,9 @@
         '导出中…': 'Exporting…',
         '导出为 PDF，保存到文章目录': 'Export as PDF into the article folder',
         '已导出 PDF：{n}': 'Exported PDF: {n}',
+        '查看 PDF': 'View PDF',
+        '用系统程序打开已导出的 PDF': 'Open the exported PDF with the system viewer',
+        '关闭提示': 'Dismiss',
         '重试所有失败的下载': 'Retry all failed downloads',
         '重试': 'Retry',
         '（无标题）': '(Untitled)',
@@ -473,6 +476,8 @@
       fontSmaller: 'M3.4 19l4.6-13.4L12.6 19M4.9 15.2h6.2M20.4 15.2h-5.2',
       // 导出：向下箭头落到托盘。
       download: 'M12 4v10.6M7.6 10.6L12 15l4.4-4.4M5 19.4h14',
+      // 查看：一只眼睛。
+      eye: 'M2.2 12S5.8 5.6 12 5.6 21.8 12 21.8 12 18.2 18.4 12 18.4 2.2 12 2.2 12zM12 9.2a2.8 2.8 0 100 5.6 2.8 2.8 0 000-5.6z',
       // 阅读模式：一本翻开的书。
       book: 'M12 6.4C9.8 5 7.2 4.8 4.4 5.6v12c2.8-.8 5.4-.6 7.6.8 2.2-1.4 4.8-1.6 7.6-.8v-12C16.8 4.8 14.2 5 12 6.4zM12 6.4v12',
     };
@@ -873,6 +878,10 @@
       '.xal-empty b{font-size:15px;color:var(--dsw-alias-label-primary)}',
       '.xal-banner{margin:10px 12px;padding:8px 10px;border-radius:7px;font-size:12px;line-height:1.5;background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent);color:var(--dsw-alias-state-error-primary);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary) 30%,transparent)}',
       '.xal-banner.info{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);border-color:var(--dsw-alias-border-l1)}',
+      '.xal-banner{display:flex;align-items:flex-start;gap:8px}',
+      '.xal-banner-text{flex:1;min-width:0;word-break:break-all}',
+      '.xal-banner-close{flex:none;border:0;background:none;color:inherit;opacity:.65;font-size:16px;line-height:1;padding:0 2px;cursor:pointer;border-radius:4px}',
+      '.xal-banner-close:hover{opacity:1}',
       '.xal-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.42);display:grid;place-items:center;padding:20px;box-sizing:border-box}',
       '.xal-dialog{width:min(560px,100%);max-height:min(80vh,720px);overflow-y:auto;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:18px;box-sizing:border-box;box-shadow:0 18px 48px rgba(0,0,0,.32)}',
       '.xal-ctx-overlay{position:fixed;inset:0;z-index:80;background:transparent}',      '.xal-ctx{position:fixed;min-width:200px;max-width:260px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);border-radius:9px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.34);box-sizing:border-box}',
@@ -1403,13 +1412,22 @@
         }
       }
 
-      // 导出当前文章为 PDF（保存到文章目录），完成后提示路径。
+      // 导出当前文章为 PDF；若已有 PDF 则改为用系统程序打开。
       async function exportPdf(item) {
         if (!item || exportingPdf) return;
-        setExportingPdf(item.postId);
         try {
+          if (item.hasPdf) {
+            await call('openPdf', { postId: item.postId });
+            return;
+          }
+          setExportingPdf(item.postId);
           const result = await call('exportPdf', { postId: item.postId });
           setNotice(t('已导出 PDF：{n}', { n: result.path }));
+          // 本地标记已导出，按钮立刻变成「查看 PDF」，不必等下次扫描。
+          setState((prev) => (prev ? {
+            ...prev,
+            articles: prev.articles.map((row) => (row.postId === item.postId ? { ...row, hasPdf: true } : row)),
+          } : prev));
         } catch (err) {
           setError(err.message);
         } finally {
@@ -1905,8 +1923,8 @@
             h('button', { className: 'xal-btn', onClick: onPasteButton, title: t('从剪贴板粘贴 X 链接') }, h(Glyph, { name: 'plus' }), h('span', null, t('粘贴链接'))),
             stats.failed ? h('button', { className: 'xal-btn', onClick: retryAll, title: t('重试所有失败的下载') }, h(Glyph, { name: 'refresh' }), h('span', null, t('重试'))) : null,
           ),
-          error ? h('div', { className: 'xal-banner' }, error) : null,
-          notice ? h('div', { className: 'xal-banner info' }, notice) : null,
+          error ? h('div', { className: 'xal-banner' }, h('span', { className: 'xal-banner-text' }, error), h('button', { className: 'xal-banner-close', onClick: () => setError(''), title: t('关闭提示'), 'aria-label': t('关闭提示') }, '\u00d7')) : null,
+          notice ? h('div', { className: 'xal-banner info' }, h('span', { className: 'xal-banner-text' }, notice), h('button', { className: 'xal-banner-close', onClick: () => setNotice(''), title: t('关闭提示'), 'aria-label': t('关闭提示') }, '\u00d7')) : null,
           h(
             'div',
             { className: 'xal-items' },
@@ -1990,7 +2008,7 @@
                       }),
                       h('span', { className: 'xal-fontval' }, activeFont + 'px'),
                     ),
-                    h('button', { className: 'xal-btn', onClick: () => exportPdf(selected), title: t('导出为 PDF，保存到文章目录') }, h(Glyph, { name: 'download' }), h('span', null, exportingPdf === selected.postId ? t('导出中…') : t('导出 PDF'))),
+                    h('button', { className: 'xal-btn', onClick: () => exportPdf(selected), title: selected.hasPdf ? t('用系统程序打开已导出的 PDF') : t('导出为 PDF，保存到文章目录') }, h(Glyph, { name: selected.hasPdf ? 'eye' : 'download' }), h('span', null, exportingPdf === selected.postId ? t('导出中…') : (selected.hasPdf ? t('查看 PDF') : t('导出 PDF')))),
                     h('button', { className: 'xal-btn', onClick: () => revealArticle(selected), title: t('在资源管理器中显示该文件') }, h(Glyph, { name: 'folderOpen' }), h('span', null, t('打开所在位置'))),
                     h('a', { className: 'xal-btn', href: selected.normalizedUrl, target: '_blank', rel: 'noreferrer noopener' }, h(Glyph, { name: 'external' }), h('span', null, t('打开原帖'))),
                     h('button', { className: 'xal-btn danger', onClick: () => removeArticle(selected, false), title: t('只移除索引，保留磁盘文件') }, h(Glyph, { name: 'close' }), h('span', null, t('从库中移除'))),

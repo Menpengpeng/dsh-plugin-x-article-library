@@ -178,6 +178,11 @@ export function apply(ctx, config = {}) {
       await ready;
       return service.exportPdf(String(input.postId || ''));
     },
+    /** 用系统默认程序打开已导出的 PDF。 */
+    async openPdf(input) {
+      await ready;
+      return service.openPdf(String(input.postId || ''));
+    },
     /** 划线/评论：把选中文字写回 article.md。 */
     async annotate(input) {
       await ready;

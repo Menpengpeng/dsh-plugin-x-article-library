@@ -25,7 +25,8 @@ DSH 桌面版插件。把公开的 X（Twitter）帖子与长文链接保存为�
 - **阅读三态**：列表标题上有「未读 / 未读完 / 已读」标签。打开文章算未读完，滚到底才算已读；「未读」筛选会包含未读完的文章。
 - **阅读模式**：工具栏点「阅读模式」收起两侧栏与功能菜单，只留正文沉浸阅读；右上角按钮或 `Esc` 退出。
 - **工具栏吸顶**：滚动正文时上方功能按钮固定在阅读区顶部，随时可用。
-- **导出 PDF**：一键把当前文章转成排版清晰的 A4 PDF，保存到文章目录，保留正文结构、图片与划线高亮。
+- **导出 PDF**：一键把当前文章转成排版清晰的 A4 PDF，保存到文章目录，保留正文结构、图片与划线高亮。导出后按钮变为「查看 PDF」，一键用系统程序打开。
+- **提示可关闭**：信息与错误提示都能手动关掉，不占阅读区。
 - **划线与评论**：选中正文一段文字，浮出工具条即可划线或写评论，标记写进 `article.md`，高亮显示、悬浮看评论。
 - **中英文界面**：设置里切换界面语言，整个 UI 即时中英切换并记住选择。
 - **AI 工具**：注册 `x_article_library` 工具，可在会话中让 AI 添加链接、列出文章、读取正文。
@@ -141,6 +142,8 @@ pnpm add file:<本仓库绝对路径>
 
 生成基于本机已安装的 Chrome/Edge（headless 打印，无需额外依赖，中文显示正常）；找不到浏览器时会明确提示。导出后界面显示文件路径，可点「打开所在位置」查看。
 
+导出成功后，该篇的工具栏按钮会变成「**查看 PDF**」，点一下用系统默认程序打开，不必再去文章目录里翻。若 PDF 被手动删掉，下次扫描会自动把按钮恢复成「导出 PDF」。
+
 ### 界面语言
 
 设置里的「语言」可选**中文 / English**，切换后整个界面即时更新，选择会被记住。
@@ -216,7 +219,7 @@ X 与图床（`pbs.twimg.com`）在本机通常需要代理。插件内置零依
 ## HTTP 接口
 
 - `GET /api/x-article-library` — 当前完整状态快照。
-- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `annotate`（划线评论写回正文）/ `exportPdf`（导出 PDF）/ `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
+- `POST /api/x-article-library` — 请求体 `{ "type": "...", ... }`，`type` 为 `parse` / `import` / `download` / `read` / `annotate`（划线评论写回正文）/ `exportPdf`（导出 PDF）/ `openPdf`（打开已导出的 PDF）/ `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`。
 - `GET /api/x-article-library/asset?postId=&name=` — 读取本地图片。
 
 所有接口都经过 Harness 的 Host/Origin 认证检查，返回 `Cache-Control: no-store`；POST 必须是 `application/json`，请求体上限 64 KiB。

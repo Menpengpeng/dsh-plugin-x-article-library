@@ -308,10 +308,22 @@ console.log('样式表 OK：', cssText.length, '字符，关键类齐全');
   assert.ok(source.includes('async function exportPdf'), '应有导出处理函数');
   assert.ok(source.includes("call('exportPdf'"), '应调用 exportPdf action');
   assert.ok(source.includes("t('导出 PDF')"), '应有导出按钮文案');
-  assert.ok(source.includes('name: \'download\''), '应有下载图标');
+  assert.ok(source.includes("name: selected.hasPdf ? 'eye' : 'download'"), '应按是否已有 PDF 切换图标');
+  assert.ok(source.includes("t('查看 PDF')"), '已导出时应显示「查看 PDF」');
+  assert.ok(source.includes("call('openPdf'"), '已有 PDF 时应用系统程序打开');
   assert.ok(source.includes('exportingPdf'), '应有导出中状态防重复点击');
   assert.ok(source.includes("t('已导出 PDF：{n}'"), '导出后应提示文件路径');
-  console.log('导出 PDF OK：工具栏按钮 + exportPdf action + 路径提示');
+  assert.ok(source.includes('hasPdf: true'), '导出成功后在本地标记已导出');
+  console.log('导出 PDF OK：工具栏按钮 + exportPdf/openPdf + 已导出切换查看');
+}
+
+// 通知可关闭
+{
+  assert.ok(source.includes('xal-banner-close'), '通知应有关闭按钮');
+  assert.ok(source.includes("setNotice('')"), '关闭通知应清空内容');
+  assert.ok(source.includes("setError('')"), '关闭错误应清空内容');
+  assert.ok(source.includes("t('关闭提示')"), '关闭按钮应有提示文案');
+  console.log('通知关闭 OK：信息与错误横幅都可手动关闭');
 }
 
 console.log('\n客户端模块测试全部通过。');

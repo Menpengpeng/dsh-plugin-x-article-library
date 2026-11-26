@@ -25,7 +25,8 @@ Left: library navigation (All / Unread / Starred / Collections / Authors). Middl
 - **Three reading states**: each list item carries an Unread / Reading / Read badge. Opening an article marks it Reading; it becomes Read once you scroll to the end. The Unread filter includes in-progress articles.
 - **Focus mode**: click "Focus mode" to hide both sidebars and all toolbar actions, leaving only the text for immersive reading. Exit with the floating button or `Esc`.
 - **Sticky toolbar**: the toolbar stays pinned to the top of the reading area while you scroll.
-- **PDF export**: turn the current article into a clean A4 PDF saved next to the Markdown, keeping structure, images and highlights.
+- **PDF export**: turn the current article into a clean A4 PDF saved next to the Markdown, keeping structure, images and highlights. After exporting, the button becomes "View PDF" for one-click opening in your system viewer.
+- **Dismissible notices**: info and error banners can be closed, so they never block the reading area.
 - **Highlights & comments**: select text in the body to reveal a small toolbar—highlight it or add a comment. Marks are written into `article.md` and shown as highlights with a hoverable comment bubble.
 - **Bilingual UI**: switch the entire interface between Chinese and English in Settings; the choice is remembered.
 - **AI tool**: registers an `x_article_library` tool so an agent can add links, list articles and read content in a conversation.
@@ -141,6 +142,8 @@ Click "Export PDF" in the reader toolbar to turn the current article into a clea
 
 Generation uses your locally installed Chrome/Edge (headless printing, no extra dependency, Chinese text renders correctly); if no browser is found you get a clear message. After export the file path is shown, and you can use "Open file location" to view it.
 
+Once an article has been exported, its toolbar button turns into "**View PDF**" — one click opens it in your system viewer, no need to hunt through the folder. If the PDF is deleted manually, the next scan restores the "Export PDF" button.
+
 ### Interface language
 
 The **Language** option in Settings switches between **Chinese / English**. The whole interface updates immediately and your choice is remembered.
@@ -216,7 +219,7 @@ Tool name `x_article_library`, parameter `action`:
 ## HTTP endpoints
 
 - `GET /api/x-article-library` — full current state snapshot.
-- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `annotate` (write a highlight/comment back into the body) / `exportPdf` (export to PDF) / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
+- `POST /api/x-article-library` — body `{ "type": "...", ... }`; `type` is one of `parse` / `import` / `download` / `read` / `annotate` (write a highlight/comment back into the body) / `exportPdf` (export to PDF) / `openPdf` (open the exported PDF) / `update` / `remove` / `createCollection` / `updateCollection` / `deleteCollection` / `settings` / `scan` / `browse` / `reveal` / `openFolder`.
 - `GET /api/x-article-library/asset?postId=&name=` — read a local image.
 
 All endpoints go through Harness Host/Origin authentication and return `Cache-Control: no-store`; POST must be `application/json` with a body up to 64 KiB.
